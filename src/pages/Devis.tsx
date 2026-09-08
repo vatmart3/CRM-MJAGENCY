@@ -179,9 +179,9 @@ const PRINT_CSS = `@page { margin: 14mm }
 @media print {
   #root { display: none !important }
   body { overflow: visible !important; background: #fff !important }
-  body > .fixed, body > .fixed * { visibility: hidden; position: static !important; overflow: visible !important; max-height: none !important; transform: none !important; animation: none !important; backdrop-filter: none !important; padding: 0; margin: 0; border: 0 }
+  body > .fixed, body > .fixed * { visibility: hidden; position: static !important; overflow: visible !important; max-height: none !important; transform: none !important; animation: none !important; backdrop-filter: none !important }
   .print-area, .print-area * { visibility: visible !important }
-  .print-area { padding: 0 !important; border-radius: 0 !important }
+  .print-area { padding: 0 !important; border-radius: 0 !important; max-width: none !important }
 }`
 
 function QuotePreview({ quote, onClose, onEdit }: { quote: Quote | null; onClose: () => void; onEdit: (q: Quote) => void }) {
