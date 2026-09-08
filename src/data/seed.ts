@@ -343,7 +343,7 @@ export const projects: Project[] = [
     id: 'pj-cafe-marine', client: 'Le Fournil de Balaruc', contact: 'Julie Roca', phone: '', email: '', city: 'Balaruc-le-Vieux', offerId: 'essentiel', amount: 990,
     depositPaid: true, balancePaid: false, deliveryDate: d(12), deliveredAt: null, domain: '', url: '',
     reviewAsked: false, referralObtained: false, addons: [], steps: steps(6), assignee: 'jeremy', partnerId: null,
-    paidAt: null, notes: 'Acompte encaissé le ' + d(-6) + '. Contenus en cours de rédaction.', createdAt: d(-8),
+    paidAt: null, notes: 'Acompte encaissé le ' + d(-5) + '. Contenus en cours de rédaction.', createdAt: d(-5),
   },
 ]
 
@@ -356,7 +356,7 @@ export const quotes: Quote[] = [
     sentAt: d(-8), nextFollowup: d(-1), status: 'Envoyé', notes: '', validityDays: 30, createdAt: d(-8) },
   { id: 'qt-3', number: 'DEV-2026-006', client: 'Le Fournil de Balaruc', clientAddress: 'Balaruc-le-Vieux', clientEmail: '', prospectId: null, offerId: 'essentiel',
     lines: [{ id: 'l1', label: 'Site Essentiel', qty: 1, unitPrice: 990 }],
-    sentAt: d(-10), nextFollowup: null, status: 'Signé', notes: '', validityDays: 30, createdAt: d(-10), signedAt: d(-8) },
+    sentAt: d(-7), nextFollowup: null, status: 'Signé', notes: '', validityDays: 30, createdAt: d(-7), signedAt: d(-5) },
   { id: 'qt-4', number: 'DEV-2026-005', client: 'Pizzeria Da Marco', clientAddress: 'Frontignan', clientEmail: '', prospectId: 'pr-pizzeria-da-marco', offerId: 'essentiel',
     lines: [{ id: 'l1', label: 'Site Essentiel', qty: 1, unitPrice: 990 }],
     sentAt: d(-24), nextFollowup: null, status: 'Refusé', notes: 'Le neveu.', validityDays: 30, createdAt: d(-24) },
