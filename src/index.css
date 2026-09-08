@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-bg text-txt font-sans antialiased;
+  font-feature-settings: 'cv11', 'ss01', 'tnum';
+}
+
+* { transition-property: color, background-color, border-color, opacity, transform, box-shadow; transition-duration: 200ms; transition-timing-function: ease; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #1F1F24; border-radius: 999px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@layer components {
+  .card { @apply bg-card border border-line rounded-card; }
+  .card-2 { @apply bg-card2 border border-line rounded-card; }
+  .label { @apply text-[11px] uppercase tracking-[0.08em] text-muted font-medium; }
+  .th { @apply text-[11px] uppercase tracking-[0.08em] text-muted font-medium text-left py-3 px-3 whitespace-nowrap; }
+  .td { @apply py-4 px-3 text-sm align-middle; }
+  .tr { @apply border-b border-line/70 last:border-0 hover:bg-white/[0.02]; }
+  .input { @apply w-full bg-card2 border border-line rounded-xl px-3.5 py-2.5 text-sm text-txt placeholder:text-muted/70 outline-none focus:border-brand/70 focus:ring-2 focus:ring-brand/20; }
+  .btn { @apply inline-flex items-center gap-2 rounded-pill px-4 py-2 text-sm font-medium whitespace-nowrap select-none disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-primary { @apply btn bg-brand text-white hover:bg-brandLight; }
+  .btn-ghost { @apply btn bg-card2 border border-line text-txt hover:border-muted/60; }
+  .btn-danger { @apply btn bg-danger/15 text-danger hover:bg-danger/25; }
+  .btn-icon { @apply inline-flex items-center justify-center w-9 h-9 rounded-pill text-muted hover:text-txt hover:bg-white/5; }
+  .pill { @apply inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap; }
+  .chip { @apply inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-medium bg-card2 border border-line text-txt; }
+  .big { @apply text-white font-extrabold leading-none tracking-tight; font-size: clamp(36px, 4vw, 56px); }
+  .fade-up { @apply animate-fadeUp; }
+  .progress { @apply h-1.5 rounded-pill bg-white/5 overflow-hidden; }
+  .progress > div { @apply h-full rounded-pill bg-brand; transition: width 400ms ease; }
+}
+
+.recharts-cartesian-grid-horizontal line { stroke: #1F1F24; }
+.recharts-tooltip-cursor { fill: rgba(255,255,255,0.03) !important; }
+
+input[type='checkbox'].cb {
+  @apply appearance-none w-[18px] h-[18px] rounded-md border border-line bg-card2 cursor-pointer grid place-content-center shrink-0;
+}
+input[type='checkbox'].cb:checked { @apply bg-brand border-brand; }
+input[type='checkbox'].cb:checked::after {
+  content: ''; width: 10px; height: 6px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg) translate(1px, -1px);
+}
+input[type='date'], input[type='time'] { color-scheme: dark; }
+select.input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8A93' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+textarea.input { min-height: 90px; resize: vertical; }
