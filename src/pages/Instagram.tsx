@@ -129,7 +129,7 @@ export default function InstagramPage() {
         {/* C — Memo */}
         <Card className="flex flex-col md:col-span-2 xl:col-span-4">
           <SectionTitle right={<span className="text-xs text-muted flex items-center gap-1"><Pencil size={11} /> Éditable</span>}>Mémo</SectionTitle>
-          <div className="space-y-5 overflow-y-auto max-h-[440px] -mr-2 pr-2 text-sm leading-relaxed">
+          <div className="space-y-5 overflow-y-auto max-h-[380px] -mr-2 pr-2 text-sm leading-relaxed">
             <MemoBlock label="Bio à appliquer" value={settings.instaBio} onChange={(instaBio) => setSettings({ instaBio })} onCopy={() => copy(settings.instaBio)} />
             <MemoBlock label="Structure du DM en 4 temps" value={settings.dmStructure} onChange={(dmStructure) => setSettings({ dmStructure })} />
             <MemoBlock label="Message type" value={settings.dmTemplate} onChange={(dmTemplate) => setSettings({ dmTemplate })} onCopy={() => copy(settings.dmTemplate)} />
