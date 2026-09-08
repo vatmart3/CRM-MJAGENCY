@@ -103,7 +103,7 @@ export default function Playbook() {
               <tr key={s.id} className="tr">
                 <Td className="w-[150px]">
                   <span className="inline-flex items-center gap-1 pill bg-brand/15 text-brandLight">
-                    J+<input type="number" min={0} value={s.day} onChange={(e) => { const day = Number(e.target.value); patch('followupSequence', s.id, { day, moment: `J+${day}` }) }} className="bg-transparent outline-none w-10 text-brandLight font-semibold text-[12px]" />
+                    J+<input type="number" min={0} value={s.day} onChange={(e) => { const day = Number(e.target.value); patch('followupSequence', s.id, { day, moment: `J+${day}` }) }} className="bg-transparent outline-none w-7 text-brandLight font-semibold text-[12px] [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
                   </span>
                 </Td>
                 <Td className="w-[160px] text-white font-medium"><Editable value={s.channel} onChange={(channel) => patch('followupSequence', s.id, { channel })} /></Td>
