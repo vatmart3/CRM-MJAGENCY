@@ -40,3 +40,7 @@ Vite · React 18 · TypeScript · Tailwind CSS · Zustand (persist) · Recharts 
 ## Données d’exemple
 
 Quelques prospects, deux clients livrés, des devis, des apporteurs et quatre semaines de KPI sont fournis pour que le cockpit soit lisible dès le premier écran. Ils se suppriment depuis chaque page, ou en bloc via **Réglages → Réinitialiser**.
+
+## Version « un seul fichier »
+
+`npm run build:single` produit `dist-artifact/mjagency-cockpit.html` : toute l’app dans un seul fichier HTML (routeur en mode hash), à ouvrir directement ou à déposer sur n’importe quel hébergement statique.

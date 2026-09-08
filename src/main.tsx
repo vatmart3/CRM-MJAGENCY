@@ -1,6 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Route, Routes } from 'react-router-dom'
+
+// VITE_ROUTER=hash produces a build that works on any static host (single HTML file, no rewrite rules).
+const Router = import.meta.env.VITE_ROUTER === 'hash' ? HashRouter : BrowserRouter
 import './index.css'
 import { Layout } from './components/Layout'
 import Dashboard from './pages/Dashboard'
@@ -19,7 +22,7 @@ import Reglages from './pages/Reglages'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
@@ -38,6 +41,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="*" element={<Dashboard />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </Router>
   </React.StrictMode>,
 )
