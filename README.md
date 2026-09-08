@@ -13,7 +13,26 @@ npm run build      # build de production dans dist/
 npm run preview    # sert dist/
 ```
 
-Aucun backend : les données vivent dans le `localStorage` du navigateur (clé `mjagency-cockpit-v1`). Export / import JSON et remise à zéro depuis **Réglages → Données**.
+Par défaut, les données vivent dans le `localStorage` du navigateur (clé `mjagency-cockpit-v1`). Export / import JSON et remise à zéro depuis **Réglages → Données**.
+
+## Mode partagé (base de données en ligne)
+
+Pour que Jérémy et Matheis travaillent sur les mêmes données depuis n'importe quel appareil, l'app se branche sur **Supabase** (Postgres, authentification et temps réel).
+
+```bash
+cp .env.example .env   # puis renseigner VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY
+```
+
+Sans ces variables, rien ne change : l'app reste en local. Avec elles, un écran de connexion apparaît, les données sont partagées et synchronisées en direct entre les deux comptes.
+
+👉 **Marche à suivre complète : [docs/MISE-EN-LIGNE.md](docs/MISE-EN-LIGNE.md)** — création du projet Supabase, schéma SQL, comptes, déploiement sur Vercel.
+
+| Fichier | Rôle |
+|---|---|
+| `supabase/schema.sql` | Tables, liste blanche des membres, règles de sécurité, temps réel |
+| `src/lib/supabase.ts` | Client, activé seulement si les variables sont présentes |
+| `src/lib/sync.ts` | Chargement, écriture groupée, réception des changements en direct |
+| `src/components/Auth.tsx` | Écran de connexion et contrôle des accès |
 
 ## Pages
 

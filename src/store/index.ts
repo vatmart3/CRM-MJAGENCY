@@ -7,6 +7,7 @@ import {
 } from './types'
 import { addDays, today } from '../lib/dates'
 import { uid } from '../lib/format'
+import { pushCollection, pushDelete, pushEverything, pushUpsert } from '../lib/sync'
 
 export type Period = 'month' | 'week' | 'quarter'
 export type UserFilter = 'all' | UserId
@@ -130,22 +131,49 @@ export const useStore = create<AppState>()(
   persist(
     (set, get) => ({
       ...initial(),
-      add: (coll, item) => set((s) => ({ [coll]: [...(s[coll] as unknown[]), item] }) as Partial<AppState>),
+      add: (coll, item) =>
+        set((s) => {
+          const row = item as unknown as Record<string, unknown>
+          pushUpsert(coll, String(row[idKey(coll)]), row)
+          return { [coll]: [...(s[coll] as unknown[]), item] } as Partial<AppState>
+        }),
       patch: (coll, id, patch) =>
         set((s) => {
           const key = idKey(coll)
           const list = (s[coll] as unknown as Record<string, unknown>[]).map((it) => (it[key] === id ? { ...it, ...patch } : it))
+          const updated = list.find((it) => it[key] === id)
+          if (updated) pushUpsert(coll, String(id), updated)
           return { [coll]: list } as Partial<AppState>
         }),
       remove: (coll, id) =>
         set((s) => {
           const key = idKey(coll)
+          pushDelete(coll, String(id))
           return { [coll]: (s[coll] as unknown as Record<string, unknown>[]).filter((it) => it[key] !== id) } as Partial<AppState>
         }),
-      setAll: (coll, items) => set(() => ({ [coll]: items }) as Partial<AppState>),
-      setScript: (p) => set((s) => ({ script: { ...s.script, ...p } })),
-      setPartnerWarning: (partnerWarning) => set({ partnerWarning }),
-      setSettings: (p) => set((s) => ({ settings: { ...s.settings, ...p } })),
+      setAll: (coll, items) =>
+        set((s) => {
+          const key = idKey(coll)
+          const before = (s[coll] as unknown as Record<string, unknown>[]).map((it) => String(it[key]))
+          pushCollection(coll, items as unknown as Record<string, unknown>[], before)
+          return { [coll]: items } as Partial<AppState>
+        }),
+      setScript: (p) =>
+        set((s) => {
+          const script = { ...s.script, ...p }
+          pushUpsert('script', 'script', script as unknown as Record<string, unknown>)
+          return { script }
+        }),
+      setPartnerWarning: (partnerWarning) => {
+        pushUpsert('partnerWarning', 'partnerWarning', { value: partnerWarning })
+        set({ partnerWarning })
+      },
+      setSettings: (p) =>
+        set((s) => {
+          const settings = { ...s.settings, ...p }
+          pushUpsert('settings', 'settings', settings as unknown as Record<string, unknown>)
+          return { settings }
+        }),
       setUi: (p) => set((s) => ({ ui: { ...s.ui, ...p } })),
       moveProspect: (id, stage) => {
         const s = get()
@@ -162,18 +190,25 @@ export const useStore = create<AppState>()(
           }
           patch.nextFollowup = addDays(today(), s.followupSequence[0]?.day ?? 1)
         }
-        set({ prospects: s.prospects.map((x) => (x.id === id ? { ...x, ...patch } : x)), followups })
+        const moved = { ...p, ...patch }
+        pushUpsert('prospects', id, moved as unknown as Record<string, unknown>)
+        for (const f of followups) if (!s.followups.includes(f)) pushUpsert('followups', f.id, f as unknown as Record<string, unknown>)
+        set({ prospects: s.prospects.map((x) => (x.id === id ? moved : x)), followups })
       },
       addDm: (n = 1) =>
         set((s) => {
           const t = today()
           const found = s.dmLogs.find((l) => l.date === t)
-          const dmLogs = found
-            ? s.dmLogs.map((l) => (l.date === t ? { ...l, count: Math.max(0, l.count + n) } : l))
-            : [...s.dmLogs, { date: t, count: Math.max(0, n) }]
+          const entry = found ? { ...found, count: Math.max(0, found.count + n) } : { date: t, count: Math.max(0, n) }
+          const dmLogs = found ? s.dmLogs.map((l) => (l.date === t ? entry : l)) : [...s.dmLogs, entry]
+          pushUpsert('dmLogs', t, entry as unknown as Record<string, unknown>)
           return { dmLogs }
         }),
-      resetAll: () => set(initial()),
+      resetAll: () => {
+        const fresh = initial()
+        void pushEverything(fresh as unknown as Record<string, unknown>, true)
+        set(fresh)
+      },
     }),
     {
       name: 'mjagency-cockpit-v1',
@@ -187,6 +222,12 @@ export const useStore = create<AppState>()(
     },
   ),
 )
+
+/** Adaptateur passé à la couche de synchronisation, qui ignore le typage des collections. */
+export const storeSyncTarget = {
+  getState: () => useStore.getState() as unknown as Record<string, unknown>,
+  setState: (partial: Record<string, unknown>) => useStore.setState(partial as Partial<AppState>),
+}
 
 export const useUsers = () => useStore((s) => s.users)
 export const userById = (users: User[], id: string | null | undefined) => users.find((u) => u.id === id)

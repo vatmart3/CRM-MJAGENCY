@@ -2,6 +2,8 @@ import { Bell, BookOpen, Briefcase, CalendarDays, Compass, FileText, Handshake, 
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Period, useStore } from '../store'
+import { isCloud, supabase } from '../lib/supabase'
+import { getSyncStatus, onSyncStatus, SyncStatus } from '../lib/sync'
 import { notifications, searchAll } from '../lib/selectors'
 import { todayLabel } from '../lib/dates'
 import { Avatar, cx, Segmented } from './ui'
@@ -40,7 +42,14 @@ function Sidebar() {
         ))}
       </nav>
       <NavLink to="/reglages" className={({ isActive }) => cx('w-11 h-11 rounded-2xl grid place-content-center mb-1', isActive ? 'text-white bg-white/[0.06]' : 'text-muted hover:text-txt')} title="Réglages"><Settings size={20} strokeWidth={1.8} /></NavLink>
-      <button title="Déconnexion" onClick={() => alert('Session locale : rien à déconnecter. Vos données restent sur cet appareil.')} className="w-11 h-11 rounded-2xl grid place-content-center text-muted hover:text-danger"><LogOut size={20} strokeWidth={1.8} /></button>
+      <button
+        title={isCloud ? 'Déconnexion' : 'Session locale : vos données restent sur cet appareil'}
+        onClick={() => {
+          if (isCloud) void supabase?.auth.signOut()
+          else alert('Session locale : rien à déconnecter. Vos données restent sur cet appareil.')
+        }}
+        className="w-11 h-11 rounded-2xl grid place-content-center text-muted hover:text-danger"
+      ><LogOut size={20} strokeWidth={1.8} /></button>
     </aside>
   )
 }
@@ -144,6 +153,24 @@ function Notifications() {
   )
 }
 
+function SyncBadge() {
+  const [status, setStatus] = useState<SyncStatus>(getSyncStatus)
+  useEffect(() => onSyncStatus(setStatus), [])
+  const map: Record<SyncStatus, { color: string; label: string; title: string }> = {
+    live: { color: '#30D158', label: 'En ligne', title: 'Données partagées et synchronisées en temps réel' },
+    connecting: { color: '#FF9F0A', label: 'Connexion', title: 'Connexion à la base de données en cours' },
+    error: { color: '#FF453A', label: 'Hors ligne', title: 'Base injoignable. Les changements repartiront à la reconnexion.' },
+    local: { color: '#8A8A93', label: 'Local', title: 'Données stockées dans ce navigateur uniquement' },
+  }
+  const s = map[status]
+  return (
+    <span title={s.title} className="hidden sm:inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-[11px] font-medium bg-card2 border border-line text-muted">
+      <span className="w-1.5 h-1.5 rounded-pill" style={{ background: s.color }} />
+      {s.label}
+    </span>
+  )
+}
+
 function Topbar() {
   const users = useStore((s) => s.users)
   const current = useStore((s) => s.settings.currentUser)
@@ -156,6 +183,7 @@ function Topbar() {
         <GlobalSearch />
         <div className="hidden lg:block flex-1 text-center text-sm text-muted capitalize-first">{todayLabel()}</div>
         <div className="flex items-center gap-1 ml-auto">
+          <SyncBadge />
           <button className="btn-icon" title="Réglages" onClick={() => nav('/reglages')}><Settings size={18} /></button>
           <Notifications />
           <button onClick={() => setSettings({ currentUser: me.id === 'jeremy' ? 'matheis' : 'jeremy' })} title={`Connecté : ${me.name} (cliquer pour changer)`} className="ml-1">

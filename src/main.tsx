@@ -6,6 +6,7 @@ import { BrowserRouter, HashRouter, Route, Routes } from 'react-router-dom'
 const Router = import.meta.env.VITE_ROUTER === 'hash' ? HashRouter : BrowserRouter
 import './index.css'
 import { Layout } from './components/Layout'
+import { AuthGate } from './components/Auth'
 import Dashboard from './pages/Dashboard'
 import Pipeline from './pages/Pipeline'
 import Relances from './pages/Relances'
@@ -22,7 +23,8 @@ import Reglages from './pages/Reglages'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Router>
+    <AuthGate>
+      <Router>
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
@@ -41,6 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="*" element={<Dashboard />} />
         </Route>
       </Routes>
-    </Router>
+      </Router>
+    </AuthGate>
   </React.StrictMode>,
 )

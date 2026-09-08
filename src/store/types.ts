@@ -275,3 +275,21 @@ export interface Notification {
   to: string
   severity: 'info' | 'warn' | 'danger'
 }
+
+// ————————————————————————————————————————————————————————————————
+// Synchronisation : quelles données partent en base, et sous quelle clé.
+// ————————————————————————————————————————————————————————————————
+
+/** Collections dont chaque élément devient une ligne de la table « records ». */
+export const SYNCED_COLLECTIONS = [
+  'users', 'offers', 'addons', 'priceRules', 'objections', 'followupSequence', 'rules', 'partnerProfiles',
+  'commissionRules', 'partnerRules', 'weekMeta', 'tasks', 'weekSlots', 'posts', 'decisions', 'questions',
+  'prospects', 'projects', 'quotes', 'partners', 'kpiWeeks', 'followups', 'meetings', 'dmLogs',
+] as const
+
+/** Objets uniques stockés sous leur propre nom. */
+export const SYNCED_SINGLETONS = ['settings', 'script', 'partnerWarning'] as const
+
+/** Champ servant d'identifiant, quand ce n'est pas « id ». */
+const ID_KEYS: Record<string, string> = { weekMeta: 'week', dmLogs: 'date' }
+export const idKeyOf = (collection: string) => ID_KEYS[collection] ?? 'id'
