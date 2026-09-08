@@ -303,7 +303,7 @@ export const settings: Settings = {
 // ————————————————————————————————————————————————————————————————
 
 const pr = (p: Partial<Prospect> & Pick<Prospect, 'business' | 'city' | 'stage' | 'assignee'>): Prospect => ({
-  id: 'pr-' + p.business.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+  id: 'pr-' + p.business.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-'),
   contactFirst: '', contactLast: '', phone: '', email: '', instagram: '', sector: '', source: 'Terrain', partnerId: null,
   offerId: 'essentiel', amount: 990, lastContact: null, nextFollowup: null, notes: '', objectionId: null, createdAt: d(-20),
   ...p,
