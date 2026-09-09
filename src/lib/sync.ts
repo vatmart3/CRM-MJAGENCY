@@ -16,13 +16,38 @@ let ready = false
 /** État de la connexion, pour l'indicateur affiché dans la barre du haut. */
 export type SyncStatus = 'local' | 'connecting' | 'live' | 'error'
 let status: SyncStatus = isCloud ? 'connecting' : 'local'
+let lastError: string | null = null
 const listeners = new Set<(s: SyncStatus) => void>()
+const notify = () => listeners.forEach((l) => l(status))
 const setStatus = (s: SyncStatus) => {
   if (status === s) return
   status = s
-  listeners.forEach((l) => l(s))
+  if (s !== 'error') lastError = null
+  notify()
 }
 export const getSyncStatus = () => status
+export const getSyncError = () => lastError
+
+/** Traduit les erreurs Supabase les plus courantes en message actionnable. */
+const explain = (e: unknown): string => {
+  const raw = e instanceof Error ? e.message : typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: unknown }).message) : String(e)
+  const code = typeof e === 'object' && e !== null && 'code' in e ? String((e as { code: unknown }).code) : ''
+  if (/does not exist|42P01/i.test(raw) || code === '42P01')
+    return 'Les tables n’existent pas encore. Exécutez le script supabase/schema.sql dans le SQL Editor de Supabase.'
+  if (code === '42501' || /row-level security|violates/i.test(raw))
+    return 'Accès refusé par la base. Vérifiez que votre adresse email figure bien dans la table allowed_emails.'
+  if (/Invalid API key|apikey/i.test(raw)) return 'Clé Supabase invalide. Vérifiez VITE_SUPABASE_ANON_KEY.'
+  if (/Failed to fetch|NetworkError|fetch failed/i.test(raw))
+    return 'Base injoignable. Vérifiez la connexion internet et l’adresse VITE_SUPABASE_URL.'
+  return raw
+}
+
+const fail = (e: unknown, context: string) => {
+  lastError = explain(e)
+  console.error('[sync] ' + context, e)
+  if (status === 'error') notify()
+  else setStatus('error')
+}
 export const onSyncStatus = (l: (s: SyncStatus) => void) => {
   listeners.add(l)
   return () => {
@@ -131,8 +156,7 @@ const flush = async () => {
     }
     setStatus('live')
   } catch (e) {
-    console.error('[sync] écriture impossible', e)
-    setStatus('error')
+    fail(e, 'écriture impossible')
   }
 }
 
@@ -179,8 +203,7 @@ export const pushEverything = async (state: State, wipeFirst = false) => {
     }
     setStatus('live')
   } catch (e) {
-    console.error('[sync] envoi initial impossible', e)
-    setStatus('error')
+    fail(e, 'envoi initial impossible')
   }
 }
 
@@ -243,11 +266,10 @@ export const initSync = async (target: StoreLike) => {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'records' }, onRealtime)
       .subscribe((s) => {
         if (s === 'SUBSCRIBED') setStatus('live')
-        else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') setStatus('error')
+        else if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') fail(new Error('Temps réel indisponible. Vérifiez que la table records est bien publiée dans supabase_realtime.'), 'temps réel')
       })
   } catch (e) {
-    console.error('[sync] connexion impossible', e)
-    setStatus('error')
+    fail(e, 'connexion impossible')
   }
 }
 

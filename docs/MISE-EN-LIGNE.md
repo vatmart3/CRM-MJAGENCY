@@ -43,14 +43,16 @@ Les adresses doivent être identiques à celles de `allowed_emails`.
 
 ## 4. Récupérer les deux clés
 
-Menu **Project Settings**, puis **API**. Deux valeurs à copier :
+Menu **Project Settings**, puis **API Keys**. Deux valeurs à copier :
 
-| Valeur | Nom dans Supabase |
-|---|---|
-| L'adresse du projet | Project URL |
-| La clé publique | anon public |
+| Valeur | Nom dans Supabase | Forme |
+|---|---|---|
+| L'adresse du projet | Project URL | `https://abcdefghijk.supabase.co` |
+| La clé publique | Publishable key, ou anon public sur les anciens projets | `sb_publishable_...` ou `eyJhbGciOi...` |
 
-La clé `anon` est faite pour être publique, elle part dans le code du site. Ce sont les règles de sécurité posées par le script SQL qui protègent les données, pas le secret de cette clé. En revanche la clé `service_role` ne doit jamais quitter Supabase.
+Cette clé publique est faite pour être publique, elle part dans le code du site. Ce sont les règles de sécurité posées par le script SQL qui protègent les données, pas le secret de cette clé.
+
+En revanche, la clé nommée **Secret key** ou **service_role** contourne toutes les règles de sécurité. Elle ne doit jamais sortir de Supabase, ni être collée dans le code, ni dans une conversation.
 
 ## 5. Tester en local
 

@@ -3,7 +3,7 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Period, useStore } from '../store'
 import { isCloud, supabase } from '../lib/supabase'
-import { getSyncStatus, onSyncStatus, SyncStatus } from '../lib/sync'
+import { getSyncError, getSyncStatus, onSyncStatus, SyncStatus } from '../lib/sync'
 import { notifications, searchAll } from '../lib/selectors'
 import { todayLabel } from '../lib/dates'
 import { Avatar, cx, Segmented } from './ui'
@@ -164,10 +164,29 @@ function SyncBadge() {
   }
   const s = map[status]
   return (
-    <span title={s.title} className="hidden sm:inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-[11px] font-medium bg-card2 border border-line text-muted">
+    <span title={(status === 'error' && getSyncError()) || s.title} className="hidden sm:inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-[11px] font-medium bg-card2 border border-line text-muted">
       <span className="w-1.5 h-1.5 rounded-pill" style={{ background: s.color }} />
       {s.label}
     </span>
+  )
+}
+
+/** Bandeau d'explication quand la base ne répond pas : l'erreur brute n'aide personne. */
+function SyncBanner() {
+  const [status, setStatus] = useState<SyncStatus>(getSyncStatus)
+  const [hidden, setHidden] = useState(false)
+  useEffect(() => onSyncStatus((s) => { setStatus(s); if (s === 'error') setHidden(false) }), [])
+  if (status !== 'error' || hidden) return null
+  return (
+    <div className="max-w-[1400px] mx-auto px-5 md:px-8 pt-4">
+      <div className="rounded-2xl border border-danger/40 bg-danger/10 px-4 py-3 flex items-start gap-3 text-sm">
+        <span className="mt-1.5 w-2 h-2 rounded-pill bg-danger shrink-0" />
+        <span className="flex-1 text-txt/90 leading-relaxed">
+          <b className="text-danger">Synchronisation interrompue.</b> {getSyncError()} Vos modifications restent enregistrées dans ce navigateur.
+        </span>
+        <button onClick={() => setHidden(true)} className="text-muted hover:text-txt shrink-0"><X size={15} /></button>
+      </div>
+    </div>
   )
 }
 
@@ -218,6 +237,7 @@ export function Layout({ children }: { children?: ReactNode }) {
     <div className="min-h-full md:pl-[72px]">
       <Sidebar />
       <Topbar />
+      <SyncBanner />
       <main className="pt-8">{children ?? <Outlet />}</main>
       <MobileBar />
       <button onClick={() => setQuick(true)} title="Création rapide" className="fixed bottom-20 md:bottom-8 right-5 md:right-8 z-40 w-14 h-14 rounded-pill bg-brand text-white grid place-content-center shadow-[0_8px_30px_rgba(0,113,227,0.45)] hover:bg-brandLight hover:scale-105">
