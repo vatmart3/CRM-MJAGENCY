@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2, LogIn } from 'lucide-react'
-import { isCloud, supabase } from '../lib/supabase'
+import { configError, isCloud, supabase } from '../lib/supabase'
 import { initSync, stopSync } from '../lib/sync'
 import { storeSyncTarget, useStore } from '../store'
 import { UserId } from '../store/types'
@@ -81,6 +81,17 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       sub.subscription.unsubscribe()
     }
   }, [setSettings])
+
+  if (configError)
+    return (
+      <Shell>
+        <p className="text-sm text-txt/90 leading-relaxed mb-2"><b className="text-danger">Configuration incomplète.</b></p>
+        <p className="text-sm text-txt/90 leading-relaxed">{configError}</p>
+        <p className="text-[11px] text-muted mt-5 leading-relaxed">
+          Corrigez les variables d’environnement, puis relancez la construction du site. Sur Vercel, ouvrez le dernier déploiement et choisissez Redeploy.
+        </p>
+      </Shell>
+    )
 
   if (phase === 'ready') return <>{children}</>
 

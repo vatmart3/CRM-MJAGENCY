@@ -43,6 +43,14 @@ Les adresses doivent être identiques à celles de `allowed_emails`.
 
 ## 4. Récupérer les deux clés
 
+⚠️ **L'adresse à copier n'est pas celle de votre navigateur.** Quand vous êtes dans Supabase, la barre d'adresse affiche le tableau de bord, `https://supabase.com/dashboard/project/votre-ref`. Ce n'est pas cette adresse qu'attend l'app. Celle du projet a une autre forme :
+
+| Ce que vous voyez dans le navigateur | Ce qu'il faut coller |
+|---|---|
+| `https://supabase.com/dashboard/project/abcdefghijk` | `https://abcdefghijk.supabase.co` |
+
+La partie du milieu, la référence du projet, est identique dans les deux. Si vous vous trompez, l'app affiche un écran « Configuration incomplète » qui le dit explicitement.
+
 Menu **Project Settings**, puis **API Keys**. Deux valeurs à copier :
 
 | Valeur | Nom dans Supabase | Forme |
@@ -87,6 +95,14 @@ Le fichier `vercel.json` du dépôt règle déjà tout : commande de build, doss
    | `VITE_SUPABASE_ANON_KEY` | la clé publiable |
 
 5. **Deploy**.
+
+**Vercel affiche un avertissement, c'est normal.** En ajoutant une variable qui commence par `VITE_`, Vercel prévient que les préfixes publics exposent la valeur au navigateur, et propose de retirer le préfixe ou de basculer la variable en **Config**.
+
+Il faut **garder le préfixe `VITE_`** et choisir **Config**. C'est voulu, et c'est le seul moyen que ça marche :
+
+- Sans le préfixe `VITE_`, Vite n'inclut pas la variable dans le site et l'app ne verra rien.
+- Ces deux valeurs sont faites pour être publiques. L'adresse du projet apparaît dans chaque requête, et la clé publiable est conçue pour vivre dans un navigateur. Ce sont les règles de sécurité posées dans Postgres qui protègent les données.
+- Ne mettez jamais en `Config` la clé **Secret key** ou **service_role**, elle contourne toutes ces règles.
 
 ⚠️ **Ces variables sont lues au moment du build, pas à l'exécution.** Si elles sont ajoutées après un premier déploiement, il faut relancer un déploiement pour qu'elles soient prises en compte. Dans **Deployments**, ouvrir le dernier et choisir **Redeploy**.
 
