@@ -33,6 +33,7 @@ Sans ces variables, rien ne change : l'app reste en local. Avec elles, un écran
 | `src/lib/supabase.ts` | Client, activé seulement si les variables sont présentes |
 | `src/lib/sync.ts` | Chargement, écriture groupée, réception des changements en direct |
 | `src/components/Auth.tsx` | Écran de connexion et contrôle des accès |
+| `vercel.json` | Build, redirections des routes et cache pour le déploiement |
 
 ## Pages
 

@@ -74,17 +74,27 @@ L'écran de connexion doit apparaître. Après connexion, la pastille en haut à
 
 ## 6. Mettre le site en ligne
 
+Le fichier `vercel.json` du dépôt règle déjà tout : commande de build, dossier de sortie, redirections pour que les adresses comme `/pipeline` fonctionnent au rechargement, et mise en cache des fichiers.
+
 1. Aller sur [vercel.com](https://vercel.com), se connecter avec GitHub.
 2. **Add New**, puis **Project**, puis importer le dépôt `crm-mjagency`.
-3. Vercel détecte Vite tout seul. Ne rien changer aux réglages de build.
-4. Ouvrir **Environment Variables** et ajouter les deux mêmes variables qu'à l'étape 5 :
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
+3. Ne rien changer aux réglages de build. Vercel lit `vercel.json`.
+4. **Avant de cliquer sur Deploy**, déplier **Environment Variables** et ajouter les deux variables de l'étape 4 :
+
+   | Name | Value |
+   |---|---|
+   | `VITE_SUPABASE_URL` | l'adresse du projet Supabase |
+   | `VITE_SUPABASE_ANON_KEY` | la clé publiable |
+
 5. **Deploy**.
 
-Vercel fournit une adresse en `.vercel.app`. Un nom de domaine à vous s'ajoute ensuite dans **Settings**, puis **Domains**.
+⚠️ **Ces variables sont lues au moment du build, pas à l'exécution.** Si elles sont ajoutées après un premier déploiement, il faut relancer un déploiement pour qu'elles soient prises en compte. Dans **Deployments**, ouvrir le dernier et choisir **Redeploy**.
 
-Chaque envoi de code sur la branche redéploie le site automatiquement.
+Si vous ouvrez le site et qu'un bandeau orange annonce « Données limitées à ce navigateur », c'est exactement ce cas : les variables manquent ou le déploiement n'a pas été relancé.
+
+La branche `claude/mjagency-crm-cockpit-1ri804` est la branche par défaut du dépôt, c'est donc elle que Vercel met en production. Chaque envoi de code dessus redéploie le site automatiquement.
+
+Vercel fournit une adresse en `.vercel.app`. Un nom de domaine à vous s'ajoute ensuite dans **Settings**, puis **Domains**.
 
 ---
 

@@ -171,23 +171,54 @@ function SyncBadge() {
   )
 }
 
-/** Bandeau d'explication quand la base ne répond pas : l'erreur brute n'aide personne. */
-function SyncBanner() {
-  const [status, setStatus] = useState<SyncStatus>(getSyncStatus)
-  const [hidden, setHidden] = useState(false)
-  useEffect(() => onSyncStatus((s) => { setStatus(s); if (s === 'error') setHidden(false) }), [])
-  if (status !== 'error' || hidden) return null
+function Banner({ tone, title, children, onClose }: { tone: 'danger' | 'warn'; title: string; children: ReactNode; onClose: () => void }) {
+  const c = tone === 'danger' ? '#FF453A' : '#FF9F0A'
   return (
     <div className="max-w-[1400px] mx-auto px-5 md:px-8 pt-4">
-      <div className="rounded-2xl border border-danger/40 bg-danger/10 px-4 py-3 flex items-start gap-3 text-sm">
-        <span className="mt-1.5 w-2 h-2 rounded-pill bg-danger shrink-0" />
-        <span className="flex-1 text-txt/90 leading-relaxed">
-          <b className="text-danger">Synchronisation interrompue.</b> {getSyncError()} Vos modifications restent enregistrées dans ce navigateur.
-        </span>
-        <button onClick={() => setHidden(true)} className="text-muted hover:text-txt shrink-0"><X size={15} /></button>
+      <div className="rounded-2xl px-4 py-3 flex items-start gap-3 text-sm border" style={{ borderColor: c + '66', background: c + '1A' }}>
+        <span className="mt-1.5 w-2 h-2 rounded-pill shrink-0" style={{ background: c }} />
+        <span className="flex-1 text-txt/90 leading-relaxed"><b style={{ color: c }}>{title}</b> {children}</span>
+        <button onClick={onClose} className="text-muted hover:text-txt shrink-0" title="Masquer"><X size={15} /></button>
       </div>
     </div>
   )
+}
+
+const LOCAL_HOSTS = ['localhost', '127.0.0.1', '']
+const NOTICE_KEY = 'mjagency-local-notice-dismissed'
+
+/** Deux alertes : la base ne répond plus, ou le site publié n'est pas branché à la base. */
+function SyncBanner() {
+  const [status, setStatus] = useState<SyncStatus>(getSyncStatus)
+  const [hidden, setHidden] = useState(false)
+  const [noticeHidden, setNoticeHidden] = useState(() => {
+    try { return localStorage.getItem(NOTICE_KEY) === '1' } catch { return false }
+  })
+  useEffect(() => onSyncStatus((s) => { setStatus(s); if (s === 'error') setHidden(false) }), [])
+
+  if (status === 'error' && !hidden)
+    return (
+      <Banner tone="danger" title="Synchronisation interrompue." onClose={() => setHidden(true)}>
+        {getSyncError()} Vos modifications restent enregistrées dans ce navigateur.
+      </Banner>
+    )
+
+  // Site publié sans variables Supabase : chacun aurait sa copie privée sans s'en rendre compte.
+  const deployed = typeof location !== 'undefined' && !LOCAL_HOSTS.includes(location.hostname)
+  if (status === 'local' && deployed && !noticeHidden)
+    return (
+      <Banner
+        tone="warn"
+        title="Données limitées à ce navigateur."
+        onClose={() => {
+          setNoticeHidden(true)
+          try { localStorage.setItem(NOTICE_KEY, '1') } catch { /* stockage indisponible */ }
+        }}
+      >
+        Rien n’est partagé avec l’autre poste ni sauvegardé en ligne. Renseignez les deux variables Supabase dans Vercel pour activer la base commune.
+      </Banner>
+    )
+  return null
 }
 
 function Topbar() {
