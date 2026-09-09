@@ -32,7 +32,7 @@ export const getSyncError = () => lastError
 const explain = (e: unknown): string => {
   const raw = e instanceof Error ? e.message : typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: unknown }).message) : String(e)
   const code = typeof e === 'object' && e !== null && 'code' in e ? String((e as { code: unknown }).code) : ''
-  if (/does not exist|42P01/i.test(raw) || code === '42P01')
+  if (/does not exist|42P01|Could not find the table/i.test(raw) || code === '42P01' || code === 'PGRST205')
     return 'Les tables n’existent pas encore. Exécutez le script supabase/schema.sql dans le SQL Editor de Supabase.'
   if (code === '42501' || /row-level security|violates/i.test(raw))
     return 'Accès refusé par la base. Vérifiez que votre adresse email figure bien dans la table allowed_emails.'
@@ -86,7 +86,7 @@ const rowsFromState = (state: State): Row[] => {
   return rows
 }
 
-const applyRows = (rows: Row[]) => {
+const applyRows = (rows: Row[], full = false) => {
   if (!store) return
   const current = store.getState()
   const next: State = {}
@@ -99,6 +99,8 @@ const applyRows = (rows: Row[]) => {
   for (const c of COLLECTIONS) {
     const list = byCollection.get(c)
     if (list) next[c] = list.map((r) => r.data)
+    // Chargement complet : une collection sans ligne en base a été vidée, on la vide ici aussi.
+    else if (full) next[c] = []
   }
   for (const c of SINGLETONS) {
     const row = byCollection.get(c)?.[0]
@@ -259,7 +261,7 @@ export const initSync = async (target: StoreLike) => {
     const rows = (data ?? []) as Row[]
     ready = true
     if (rows.length === 0) await pushEverything(target.getState())
-    else applyRows(rows)
+    else applyRows(rows, true)
 
     supabase
       .channel('records-live')

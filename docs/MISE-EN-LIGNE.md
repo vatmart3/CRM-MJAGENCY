@@ -100,6 +100,32 @@ Chaque envoi de code sur la branche redéploie le site automatiquement.
 
 **Réglage personnel.** L'utilisateur courant, Jérémy ou Matheis, est déduit du compte connecté. C'est la seule donnée qui ne se partage pas.
 
+## Si quelque chose ne marche pas
+
+L'app ne casse jamais complètement. Elle bascule sur les données du navigateur et affiche un bandeau rouge en haut, qui dit quoi corriger. Les quatre cas possibles :
+
+| Message | Cause | Correction |
+|---|---|---|
+| Les tables n'existent pas encore | Le script SQL n'a pas été exécuté, ou l'a été sur un autre projet | Relancer `supabase/schema.sql` dans le SQL Editor du bon projet |
+| Accès refusé par la base | L'adresse connectée n'est pas dans `allowed_emails`, ou elle y figure avec une faute | Comparer caractère par caractère avec l'adresse du compte dans Authentication |
+| Clé Supabase invalide | Mauvaise valeur dans `VITE_SUPABASE_ANON_KEY` | Recopier la Publishable key depuis Project Settings, API Keys |
+| Base injoignable | Adresse du projet erronée, ou réseau coupé | Vérifier `VITE_SUPABASE_URL`, qui finit par `.supabase.co` sans barre oblique finale |
+
+Après avoir modifié le fichier `.env`, il faut arrêter puis relancer `npm run dev`. Vite ne relit pas ce fichier à chaud.
+
+Si l'écran de connexion refuse le mot de passe alors qu'il est bon, c'est souvent que le compte n'a pas été confirmé. Dans Authentication, puis Users, ouvrir le compte et vérifier qu'il est bien confirmé.
+
+## Renforcement optionnel
+
+Par défaut, toute personne connectée peut lire la liste des membres. Avec l'inscription publique désactivée, cela ne concerne que vous deux et ne pose aucun problème. Pour restreindre chacun à sa seule ligne :
+
+```sql
+drop policy if exists "membres : lecture" on public.allowed_emails;
+create policy "membres : lecture" on public.allowed_emails
+  for select to authenticated
+  using (lower(email) = lower(coalesce(auth.jwt() ->> 'email', '')));
+```
+
 ## Sécurité
 
 - Seules les adresses inscrites dans `allowed_emails` peuvent lire ou écrire. La règle est appliquée par Postgres, pas par le code du site, donc elle ne se contourne pas.
