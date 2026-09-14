@@ -304,7 +304,7 @@ export const settings: Settings = {
 
 const pr = (p: Partial<Prospect> & Pick<Prospect, 'business' | 'city' | 'stage' | 'assignee'>): Prospect => ({
   id: 'pr-' + p.business.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-'),
-  contactFirst: '', contactLast: '', phone: '', email: '', instagram: '', sector: '', source: 'Terrain', partnerId: null,
+  contactFirst: '', contactLast: '', phone: '', email: '', instagram: '', website: '', sector: '', source: 'Terrain', partnerId: null,
   offerId: 'essentiel', amount: 990, lastContact: null, nextFollowup: null, notes: '', objectionId: null, createdAt: d(-20),
   ...p,
 })
@@ -312,9 +312,9 @@ const pr = (p: Partial<Prospect> & Pick<Prospect, 'business' | 'city' | 'stage' 
 export const prospects: Prospect[] = [
   pr({ business: 'La Cave des Halles', city: 'Sète', sector: 'Caviste', stage: 'À contacter', assignee: 'matheis', source: 'Terrain', instagram: '@lacavedeshalles', createdAt: d(-2) }),
   pr({ business: 'Boulangerie du Port', city: 'Frontignan', sector: 'Boulangerie', stage: 'À contacter', assignee: 'matheis', source: 'DM Instagram', createdAt: d(-1) }),
-  pr({ business: 'Le Barbier de Mèze', city: 'Mèze', sector: 'Barbier', stage: 'Contacté', assignee: 'matheis', source: 'DM Instagram', instagram: '@lebarbierdemeze', lastContact: d(-9), nextFollowup: d(0), notes: 'Vu en story, a liké notre carrousel avant/après.' }),
+  pr({ business: 'Le Barbier de Mèze', city: 'Mèze', sector: 'Barbier', stage: 'Contacté', assignee: 'matheis', source: 'DM Instagram', instagram: '@lebarbierdemeze', website: 'lebarbierdemeze.fr', lastContact: d(-9), nextFollowup: d(0), notes: 'Vu en story, a liké notre carrousel avant/après.' }),
   pr({ business: 'Poissonnerie Marius', city: 'Marseillan', sector: 'Poissonnerie', stage: 'Contacté', assignee: 'matheis', source: 'Appel', contactFirst: 'Marius', contactLast: 'Roux', lastContact: d(-2), nextFollowup: d(1) }),
-  pr({ business: 'Institut Bleu Lagune', city: 'Balaruc-les-Bains', sector: 'Institut de beauté', stage: 'Conversation engagée', assignee: 'matheis', source: 'Recommandation client', contactFirst: 'Sophie', contactLast: 'Martin', phone: '06 00 00 00 00', lastContact: d(-3), nextFollowup: d(2), offerId: 'signature', amount: 1890, notes: 'Recommandée par Au Bon Pain. Veut une prise de RDV en ligne.' }),
+  pr({ business: 'Institut Bleu Lagune', city: 'Balaruc-les-Bains', sector: 'Institut de beauté', stage: 'Conversation engagée', assignee: 'matheis', source: 'Recommandation client', contactFirst: 'Sophie', contactLast: 'Martin', website: 'institut-bleulagune.fr', phone: '06 00 00 00 00', lastContact: d(-3), nextFollowup: d(2), offerId: 'signature', amount: 1890, notes: 'Recommandée par Au Bon Pain. Veut une prise de RDV en ligne.' }),
   pr({ business: 'Ostréiculture Tarbouriech Jr', city: 'Bouzigues', sector: 'Ostréiculteur', stage: 'Conversation engagée', assignee: 'matheis', source: 'Terrain', lastContact: d(-12), nextFollowup: d(-5), offerId: 'surmesure', amount: 3500, objectionId: 'o5', notes: 'Veut vendre en ligne. « Je vais réfléchir » — relancer sur le budget ou le moment.' }),
   pr({ business: 'Café de la Marine', city: 'Sète', sector: 'Bar / Café', stage: 'RDV planifié', assignee: 'matheis', source: 'Terrain', contactFirst: 'Karim', contactLast: 'Benali', lastContact: d(-1), nextFollowup: d(3), offerId: 'fidelite', amount: 300, notes: 'RDV jeudi 15 h au comptoir. Intéressé par la fidélité digitale.' }),
   pr({ business: 'Garage Poussan Auto', city: 'Poussan', sector: 'Garage', stage: 'Devis envoyé', assignee: 'matheis', source: 'Apporteur', partnerId: 'pa-1', contactFirst: 'Luc', contactLast: 'Fabre', lastContact: d(-4), nextFollowup: d(3), offerId: 'essentiel', amount: 990, objectionId: 'o2' }),

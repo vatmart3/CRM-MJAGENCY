@@ -37,6 +37,7 @@ export interface Prospect {
   phone: string
   email: string
   instagram: string
+  website: string
   city: string
   sector: string
   source: Source

@@ -15,7 +15,7 @@ const ASSIGNEES: { value: Assignee; label: string }[] = [
 export function ProspectForm({ open, onClose, initial }: { open: boolean; onClose: () => void; initial?: Prospect | null }) {
   const { add, patch, remove, settings, offers, partners, objections, followupSequence, moveProspect } = useStore()
   const empty = (): Prospect => ({
-    id: uid(), business: '', contactFirst: '', contactLast: '', phone: '', email: '', instagram: '', city: 'Sète', sector: '', source: 'Terrain', partnerId: null,
+    id: uid(), business: '', contactFirst: '', contactLast: '', phone: '', email: '', instagram: '', website: '', city: 'Sète', sector: '', source: 'Terrain', partnerId: null,
     stage: settings.pipelineStages[0], offerId: 'essentiel', amount: 990, assignee: 'matheis', lastContact: today(), nextFollowup: null, notes: '', objectionId: null, createdAt: today(),
   })
   const [p, setP] = useState<Prospect>(initial ?? empty())
@@ -46,6 +46,7 @@ export function ProspectForm({ open, onClose, initial }: { open: boolean; onClos
         <Field label="Téléphone"><input className="input" value={p.phone} onChange={(e) => set('phone', e.target.value)} /></Field>
         <Field label="Email"><input className="input" type="email" value={p.email} onChange={(e) => set('email', e.target.value)} /></Field>
         <Field label="Instagram"><input className="input" value={p.instagram} onChange={(e) => set('instagram', e.target.value)} placeholder="@compte" /></Field>
+        <Field label="Site web" hint="Sert à l’analyse automatique dans le générateur de DM."><input className="input" value={p.website} onChange={(e) => set('website', e.target.value)} placeholder="boulangerieduport.fr" /></Field>
         <Field label="Ville">
           <input className="input" list="cities" value={p.city} onChange={(e) => set('city', e.target.value)} />
           <datalist id="cities">{CITIES.map((c) => <option key={c} value={c} />)}</datalist>

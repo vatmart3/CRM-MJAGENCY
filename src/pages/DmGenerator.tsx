@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Check, Copy, Dices, Plus, RotateCcw, Send, Trash2 } from 'lucide-react'
+import { AlertTriangle, Check, Copy, Dices, Loader2, Plus, RotateCcw, ScanSearch, Send, Sparkles, Trash2 } from 'lucide-react'
 import { useStore } from '../store'
 import { DM_PARTS, DM_PLACEHOLDERS, DmPart, DmSnippet, DmTone } from '../store/types'
 import { today } from '../lib/dates'
 import { uid } from '../lib/format'
-import { Accordion, Card, ConfirmDelete, cx, Editable, Empty, Field, Page, SectionTitle, Toggle } from '../components/ui'
+import { Accordion, Callout, Card, Checkbox, ConfirmDelete, cx, Editable, Empty, Field, Page, Progress, SectionTitle, Toggle } from '../components/ui'
+import { AnalyseError, AnalyseResult, analyseSite } from '../lib/ai'
 
 const WHEN_SUGGESTIONS = ['samedi', 'hier', 'ce matin', 'en fin de journée', 'la semaine dernière', 'pendant le marché']
 const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{1F1E6}-\u{1F1FF}]/gu
@@ -30,6 +31,8 @@ const fillTemplate = (template: string, vars: Record<string, string>) =>
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]+$/gm, '')
     .trim()
+
+const scoreColor = (score: number) => (score >= 75 ? '#30D158' : score >= 45 ? '#FF9F0A' : '#FF453A')
 
 const pickRandom = <T,>(list: T[]): T | undefined => (list.length ? list[Math.floor(Math.random() * list.length)] : undefined)
 
@@ -78,6 +81,11 @@ export default function DmGenerator() {
   const [copied, setCopied] = useState(false)
   const [sent, setSent] = useState(false)
   const [stripEmoji, setStripEmoji] = useState(false)
+  const [website, setWebsite] = useState('')
+  const [noSite, setNoSite] = useState(false)
+  const [analysing, setAnalysing] = useState(false)
+  const [analysis, setAnalysis] = useState<AnalyseResult | null>(null)
+  const [analyseError, setAnalyseError] = useState('')
 
   const tone = dmTones.find((t) => t.id === toneId) ?? dmTones[0]
   const me = users.find((u) => u.id === settings.currentUser) ?? users[0]
@@ -93,6 +101,10 @@ export default function DmGenerator() {
     setPrenom(p.contactFirst)
     setVille(p.city)
     setSecteur(p.sector)
+    setWebsite(p.website ?? '')
+    setNoSite(!(p.website ?? '').trim())
+    setAnalysis(null)
+    setAnalyseError('')
   }
   useEffect(() => {
     const fromUrl = params.get('prospect')
@@ -170,6 +182,32 @@ export default function DmGenerator() {
     setTimeout(() => setSent(false), 2600)
   }
 
+  const runAnalyse = async () => {
+    setAnalysing(true)
+    setAnalyseError('')
+    setAnalysis(null)
+    try {
+      const result = await analyseSite({
+        url: website, noSite, business: commerce, city: ville, sector: secteur, prenom,
+        toneLabel: tone?.label ?? '', toneTemplate: tone?.template ?? '',
+      })
+      setAnalysis(result)
+      // Le site analysé mérite d'être conservé sur la fiche du prospect.
+      const p = prospects.find((x) => x.id === prospectId)
+      if (p && website.trim() && p.website !== website.trim()) patch('prospects', p.id, { website: website.trim() })
+    } catch (e) {
+      setAnalyseError(e instanceof AnalyseError ? e.message : 'L’analyse a échoué.')
+    } finally {
+      setAnalysing(false)
+    }
+  }
+
+  const useProposal = (texte: string) => {
+    setMessage(texte)
+    setManual(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const dmToday = useStore((s) => s.dmLogs.find((l) => l.date === today())?.count ?? 0)
   const openProspects = prospects.filter((p) => p.stage !== 'Gagné' && p.stage !== 'Perdu')
 
@@ -222,6 +260,110 @@ export default function DmGenerator() {
                 <datalist id="dm-quand">{WHEN_SUGGESTIONS.map((w) => <option key={w} value={w} />)}</datalist>
               </Field>
             </div>
+          </Card>
+
+          <Card>
+            <SectionTitle
+              right={
+                analysis?.audit?.reachable ? (
+                  <span className="pill" style={{ background: scoreColor(analysis.audit.score) + '22', color: scoreColor(analysis.audit.score) }}>
+                    {analysis.audit.score} / 100
+                  </span>
+                ) : undefined
+              }
+            >
+              Analyse du site
+            </SectionTitle>
+            <p className="text-xs text-muted mb-4 leading-relaxed">
+              L’app ouvre le site, mesure ce qui cloche, puis l’IA rédige trois messages à partir de ces constats. Elle ne peut rien reprocher qui n’ait été mesuré.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                className="input"
+                placeholder="boulangerieduport.fr"
+                value={website}
+                disabled={noSite}
+                onChange={(e) => setWebsite(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !analysing) void runAnalyse() }}
+              />
+              <button className="btn-primary justify-center shrink-0" onClick={() => void runAnalyse()} disabled={analysing || (!noSite && !website.trim())}>
+                {analysing ? <><Loader2 size={15} className="animate-spin" /> Analyse…</> : <><ScanSearch size={15} /> Analyser</>}
+              </button>
+            </div>
+            <label className="inline-flex items-center gap-2.5 mt-3 text-sm text-muted cursor-pointer">
+              <Checkbox checked={noSite} onChange={(v) => { setNoSite(v); setAnalysis(null) }} />
+              Ce commerce n’a pas de site du tout
+            </label>
+
+            {analyseError && <div className="mt-4"><Callout tone="danger" title="Analyse impossible.">{analyseError}</Callout></div>}
+
+            {analysis && (
+              <div className="mt-5 space-y-5">
+                {analysis.audit && !analysis.audit.reachable && (
+                  <Callout tone="warn" title="Le site ne répond pas.">
+                    {analysis.audit.error} C’est en soi le constat le plus parlant pour le commerçant.
+                  </Callout>
+                )}
+
+                {analysis.audit?.reachable && (
+                  <div>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <span className="label">Ce qui cloche</span>
+                      <span className="text-[11px] text-muted">{analysis.audit.problems.length} défaut{analysis.audit.problems.length > 1 ? 's' : ''} sur {analysis.audit.findings.length} points vérifiés</span>
+                    </div>
+                    <Progress value={analysis.audit.score} color={scoreColor(analysis.audit.score)} />
+                    <ul className="mt-3 space-y-2">
+                      {analysis.audit.problems.slice(0, 7).map((f) => (
+                        <li key={f.key} className="flex items-start gap-2.5 text-sm">
+                          <AlertTriangle size={14} className="text-warn mt-0.5 shrink-0" />
+                          <span className="text-txt/90 leading-snug"><b className="text-white font-medium">{f.label}.</b> {f.detail}</span>
+                        </li>
+                      ))}
+                      {!analysis.audit.problems.length && <li className="text-sm text-ok">Aucun défaut mesurable. Le site est propre.</li>}
+                    </ul>
+                  </div>
+                )}
+
+                {analysis.aiError && <Callout tone="warn" title="Rédaction par IA indisponible.">{analysis.aiError}</Callout>}
+
+                {analysis.ai && (
+                  <>
+                    <div>
+                      <span className="label block mb-1.5">En une phrase</span>
+                      <p className="text-[15px] text-white leading-relaxed">{analysis.ai.resume}</p>
+                    </div>
+                    {analysis.ai.priorites.length > 0 && (
+                      <div>
+                        <span className="label block mb-2">Les priorités</span>
+                        <ol className="space-y-1.5">
+                          {analysis.ai.priorites.map((t, i) => (
+                            <li key={i} className="flex gap-2.5 text-sm text-txt/90">
+                              <span className="w-5 h-5 rounded-pill bg-brand/15 text-brand text-[11px] font-bold grid place-content-center shrink-0">{i + 1}</span>
+                              <span className="leading-snug">{t}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                    <div>
+                      <span className="label block mb-2">Trois messages proposés</span>
+                      <div className="space-y-2">
+                        {analysis.ai.dms.map((d, i) => (
+                          <div key={i} className="card-2 !rounded-2xl p-4">
+                            <div className="flex items-center justify-between gap-3 mb-2">
+                              <span className="pill bg-brand/15 text-brand"><Sparkles size={11} /> {d.angle}</span>
+                              <button className="btn-ghost !py-1.5" onClick={() => useProposal(d.texte)}>Utiliser</button>
+                            </div>
+                            <p className="text-sm text-txt/90 leading-relaxed whitespace-pre-wrap">{d.texte}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </Card>
 
           <Card>

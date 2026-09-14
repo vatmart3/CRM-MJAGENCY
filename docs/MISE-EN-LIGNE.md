@@ -114,6 +114,38 @@ Vercel fournit une adresse en `.vercel.app`. Un nom de domaine à vous s'ajoute 
 
 ---
 
+## 7. Activer l'analyse de site par IA (facultatif)
+
+Le générateur de DM peut ouvrir le site d'un prospect, mesurer ce qui cloche, puis faire rédiger trois messages par Claude. Sans cette étape, le générateur fonctionne quand même, avec ses modèles et ses formulations.
+
+1. Créer une clé sur [console.anthropic.com](https://console.anthropic.com), rubrique **API Keys**.
+2. Dans Vercel, **Settings**, puis **Environment Variables**, ajouter :
+
+   | Name | Value |
+   |---|---|
+   | `ANTHROPIC_API_KEY` | la clé, qui commence par `sk-ant-` |
+
+3. Relancer un déploiement (**Deployments**, ouvrir le dernier, **Redeploy**).
+
+⚠️ **Cette variable ne prend surtout pas le préfixe `VITE_`.** C'est la différence essentielle avec les deux variables Supabase. Une clé Anthropic préfixée `VITE_` serait recopiée dans le code du site et lisible par n'importe quel visiteur, qui pourrait alors dépenser votre crédit. Sans préfixe, elle ne sort jamais du serveur.
+
+Quand Vercel affiche son avertissement sur les préfixes publics, il ne concerne donc que les variables Supabase, pas celle-ci.
+
+**Qui peut lancer une analyse.** La fonction vérifie que l'appelant est connecté et que son adresse figure dans `allowed_emails`. Une personne extérieure qui trouverait l'adresse de la fonction est refusée, et ne consomme rien.
+
+**Ce que ça coûte.** Chaque analyse est un appel facturé à l'usage. D'après les tarifs publiés du modèle utilisé, comptez un ordre de grandeur de quelques centimes par analyse. Pour cinq DM par jour, cela reste très inférieur à un abonnement mensuel d'outil marketing. La variable `ANTHROPIC_EFFORT=low` réduit encore le coût et le temps de réponse.
+
+**Tester en local.** La fonction ne tourne pas avec `npm run dev`, qui ne sert que le site. Il faut la commande de Vercel :
+
+```bash
+npm i -g vercel
+vercel dev
+```
+
+Sans cela, l'app affiche un message clair expliquant que l'analyse n'est disponible que sur le site déployé.
+
+---
+
 ## Comment ça marche, une fois branché
 
 **Une seule table pour tout.** Chaque prospect, tâche, devis ou publication est une ligne de `records`, avec le nom de sa catégorie et son contenu en JSON. Cela évite de modifier la base à chaque fois qu'un champ change dans l'app.

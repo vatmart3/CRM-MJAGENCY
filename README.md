@@ -65,6 +65,16 @@ Le message se compose à partir de cinq styles modifiables (amical, professionne
 
 Les styles sont des textes à trous. Les champs disponibles sont listés dans la page, sous « Modèles de message ».
 
+### Analyse de site par IA
+
+Si `ANTHROPIC_API_KEY` est renseignée côté serveur, le générateur peut aussi ouvrir le site du prospect et proposer trois messages rédigés.
+
+Le partage des rôles est volontaire. `api/_audit.ts` **mesure** une vingtaine de points vérifiables : affichage mobile, HTTPS, titre et description, balisage commerce local, téléphone cliquable, horaires, vitesse, images décrites. Le modèle ne fait que **mettre ces constats en mots**. Il ne peut donc pas reprocher au commerçant un défaut qui n'existe pas, ce qui est la règle première du playbook.
+
+La clé vit uniquement sur le serveur, dans `api/analyse.ts`, et n'a jamais de préfixe `VITE_`. La fonction refuse les appels qui ne viennent pas d'un compte de la liste des membres.
+
+Sans clé, l'analyse technique reste disponible et seule la rédaction est désactivée.
+
 ## Stack
 
 Vite · React 18 · TypeScript · Tailwind CSS · Zustand (persist) · Recharts · lucide-react · React Router.
