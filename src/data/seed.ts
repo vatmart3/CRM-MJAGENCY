@@ -437,6 +437,15 @@ Du coup j'ai tapé « {secteur} {ville} » sur Google pour voir, et {constat}.
 {valeur}
 
 {question}`,
+    templateSite: `Salut {prenom} 👋
+
+J'ai tapé « {secteur} {ville} » sur Google et je suis tombé sur le site de {commerce}.
+
+Un truc m'a sauté aux yeux : {constat}.
+
+{valeur}
+
+{question}`,
   },
   {
     id: 'professionnel',
@@ -448,6 +457,17 @@ Du coup j'ai tapé « {secteur} {ville} » sur Google pour voir, et {constat}.
 Je me permets de vous écrire au sujet de {commerce}. {observation}.
 
 En cherchant « {secteur} {ville} » sur Google, {constat}.
+
+{valeur}
+
+{question}
+
+{moi} — {agence}`,
+    templateSite: `Bonjour {prenom},
+
+J'ai cherché « {secteur} {ville} » sur Google, et je suis tombé sur le site de {commerce}.
+
+Un point m'a arrêté : {constat}.
 
 {valeur}
 
@@ -469,6 +489,15 @@ Par contre, en cherchant « {secteur} {ville} » sur Google : {constat}.
 {valeur}
 
 {question}`,
+    templateSite: `Bonjour {prenom},
+
+J'ai regardé le site de {commerce}.
+
+Le point qui coûte le plus : {constat}.
+
+{valeur}
+
+{question}`,
   },
   {
     id: 'local',
@@ -480,6 +509,15 @@ Par contre, en cherchant « {secteur} {ville} » sur Google : {constat}.
 On est une petite agence de {villeAgence}, on s'occupe des sites des commerces du coin. Je passe souvent devant {commerce}, et {observation}.
 
 J'ai regardé « {secteur} {ville} » sur Google par curiosité, {constat}.
+
+{valeur}
+
+{question}`,
+    templateSite: `Bonjour {prenom},
+
+On est une petite agence de {villeAgence}, on s'occupe des sites des commerces du coin. J'ai regardé celui de {commerce} par curiosité.
+
+{constat}.
 
 {valeur}
 
@@ -497,6 +535,15 @@ Une question qui va vous paraître bizarre : vous savez combien de personnes tro
 Je viens de regarder, {constat}.
 
 Ce n'est pas une question piège, {observation}.
+
+{valeur}
+
+{question}`,
+    templateSite: `Bonjour {prenom},
+
+Vous savez ce que voit un client qui ouvre le site de {commerce} depuis son téléphone ?
+
+Je viens de regarder : {constat}.
 
 {valeur}
 

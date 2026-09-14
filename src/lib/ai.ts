@@ -7,6 +7,8 @@ export interface AuditFinding {
   ok: boolean
   detail: string
   weight: number
+  /** Constat et contrepartie prêts à l'emploi, pour écrire un DM sans IA. */
+  dm?: { constat: string; valeur: string }
 }
 export interface SiteAudit {
   url: string

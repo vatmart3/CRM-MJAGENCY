@@ -65,15 +65,19 @@ Le message se compose à partir de cinq styles modifiables (amical, professionne
 
 Les styles sont des textes à trous. Les champs disponibles sont listés dans la page, sous « Modèles de message ».
 
-### Analyse de site par IA
+### Analyse du site du prospect
 
-Si `ANTHROPIC_API_KEY` est renseignée côté serveur, le générateur peut aussi ouvrir le site du prospect et proposer trois messages rédigés.
+Le générateur ouvre le site du prospect et **mesure** une vingtaine de points vérifiables : affichage mobile, HTTPS, titre et description, balisage commerce local, téléphone cliquable, horaires, vitesse, images décrites, poids de la page. Chaque défaut porte une formulation prête à l'emploi, et l'app en compose trois messages.
 
-Le partage des rôles est volontaire. `api/_audit.ts` **mesure** une vingtaine de points vérifiables : affichage mobile, HTTPS, titre et description, balisage commerce local, téléphone cliquable, horaires, vitesse, images décrites. Le modèle ne fait que **mettre ces constats en mots**. Il ne peut donc pas reprocher au commerçant un défaut qui n'existe pas, ce qui est la règle première du playbook.
+**C'est gratuit et sans clé d'API.** L'analyse tourne dans `api/_audit.ts`, une fonction serveur qui ne fait que télécharger la page et la lire.
 
-La clé vit uniquement sur le serveur, dans `api/analyse.ts`, et n'a jamais de préfixe `VITE_`. La fonction refuse les appels qui ne viennent pas d'un compte de la liste des membres.
+Rien n'est inventé : un message ne peut reprocher qu'un défaut effectivement mesuré, ce qui est la règle première du playbook.
 
-Sans clé, l'analyse technique reste disponible et seule la rédaction est désactivée.
+### Rédaction par IA (facultatif)
+
+Si `ANTHROPIC_API_KEY` est renseignée côté serveur, la rédaction est confiée à Claude, à partir des mêmes constats mesurés. Les messages sont mieux tournés, le fond est identique.
+
+La clé vit uniquement dans `api/analyse.ts` et n'a jamais de préfixe `VITE_`. La fonction refuse les appels qui ne viennent pas d'un compte de la liste des membres. Sans clé, tout le reste fonctionne à l'identique.
 
 ## Stack
 

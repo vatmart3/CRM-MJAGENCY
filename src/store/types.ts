@@ -296,7 +296,10 @@ export interface DmTone {
   label: string
   hint: string
   emoji: boolean
+  /** Message fondé sur un passage devant la boutique. */
   template: string
+  /** Message fondé sur l'analyse du site. Les quatre temps deviennent trois : le site remplace l'observation. */
+  templateSite: string
 }
 
 /** Une formulation proposée pour l'un des quatre temps. */

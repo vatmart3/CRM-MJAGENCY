@@ -26,11 +26,33 @@ const fillTemplate = (template: string, vars: Record<string, string>) =>
     })
     .join('\n')
     .replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? '')
-    .replace(/[ \t]+([,.!?])/g, '$1')
+    .replace(/[ \t]+([,.])/g, '$1')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/[ \t]+$/gm, '')
     .trim()
+
+const NEW_TEMPLATE = 'Bonjour {prenom},\n\n{observation}.\n\n{constat}.\n\n{valeur}\n\n{question}'
+const NEW_TEMPLATE_SITE = 'Bonjour {prenom},\n\nJ’ai regardé le site de {commerce}.\n\n{constat}.\n\n{valeur}\n\n{question}'
+
+/** Quand le commerce n'a pas de site du tout, l'angle ne vient pas d'une mesure. */
+const NO_SITE_ANGLES: { angle: string; constat: string; valeur: string }[] = [
+  {
+    angle: 'Aucun site',
+    constat: 'en cherchant « {secteur} {ville} » sur Google, je ne trouve pas de site à votre nom, seulement votre fiche',
+    valeur: 'Je peux vous envoyer les trois réglages de la fiche Google qui rapportent le plus quand on n’a pas de site. C’est gratuit et vous les faites vous-même.',
+  },
+  {
+    angle: 'Les concurrents',
+    constat: 'deux {secteur}s de {ville} sortent avant vous parce qu’ils ont un site, même très simple',
+    valeur: 'Je peux vous montrer lesquels et ce qu’ils ont de plus. Vous verrez que ce n’est pas grand-chose.',
+  },
+  {
+    angle: 'Le soir, sur téléphone',
+    constat: 'quelqu’un qui vous cherche à 19 h sur son téléphone ne trouve ni vos horaires ni un moyen de vous joindre en un clic',
+    valeur: 'Je peux vous dire comment régler ça sans site, en dix minutes, directement depuis votre fiche Google.',
+  },
+]
 
 const scoreColor = (score: number) => (score >= 75 ? '#30D158' : score >= 45 ? '#FF9F0A' : '#FF453A')
 
@@ -135,7 +157,7 @@ export default function DmGenerator() {
       prenom: prenom.trim(),
       commerce: commerce.trim() || 'votre commerce',
       ville: ville.trim(),
-      secteur: secteur.trim() || 'votre activité',
+      secteur: (secteur.trim() || 'votre activité').toLowerCase(),
       quand: quand.trim(),
       moi: me?.name ?? '',
       agence: settings.agency.name,
@@ -149,7 +171,7 @@ export default function DmGenerator() {
 
   const generated = useMemo(() => {
     if (!tone) return ''
-    const text = fillTemplate(tone.template, vars)
+    const text = fillTemplate(tone.template || NEW_TEMPLATE, vars)
     return stripEmoji ? text.replace(EMOJI, '').replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+$/gm, '') : text
   }, [tone, vars, stripEmoji])
 
@@ -202,6 +224,30 @@ export default function DmGenerator() {
     }
   }
 
+  /** Compose un message à partir d'un constat mesuré, sans passer par l'IA. */
+  const buildFromFinding = (constat: string, valeur: string, useSiteTemplate: boolean) => {
+    if (!tone) return ''
+    const template = (useSiteTemplate ? tone.templateSite : tone.template) || (useSiteTemplate ? NEW_TEMPLATE_SITE : NEW_TEMPLATE)
+    const text = fillTemplate(template, {
+      ...vars,
+      constat: constat.replace(/\{(ville|secteur|commerce)\}/g, (_, k: string) => vars[k as 'ville' | 'secteur' | 'commerce'] ?? ''),
+      valeur,
+      question: vars.question || 'Je vous envoie ça ?',
+    })
+    return stripEmoji ? text.replace(EMOJI, '').replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+$/gm, '') : text
+  }
+
+  /** Les propositions de l'IA quand elle est active, sinon celles construites depuis les mesures. */
+  const proposals = useMemo(() => {
+    if (analysis?.ai?.dms.length) return analysis.ai.dms.map((d) => ({ angle: d.angle, texte: d.texte, ia: true }))
+    if (!analysis) return []
+    if (noSite || !analysis.audit)
+      return NO_SITE_ANGLES.map((a) => ({ angle: a.angle, texte: buildFromFinding(a.constat, a.valeur, false), ia: false }))
+    const usable = analysis.audit.problems.filter((f) => f.dm)
+    return usable.slice(0, 3).map((f) => ({ angle: f.label, texte: buildFromFinding(f.dm!.constat, f.dm!.valeur, true), ia: false }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analysis, tone, vars, stripEmoji, noSite])
+
   const useProposal = (texte: string) => {
     setMessage(texte)
     setManual(true)
@@ -219,7 +265,7 @@ export default function DmGenerator() {
             text="Aucun style de message. Créez-en un pour commencer à écrire vos DM."
             action="Créer un style"
             onAction={() =>
-              add('dmTones', { id: uid(), label: 'Nouveau style', hint: '', emoji: false, template: 'Bonjour {prenom},\n\n{observation}\n\n{constat}\n\n{valeur}\n\n{question}' })
+              add('dmTones', { id: uid(), label: 'Nouveau style', hint: '', emoji: false, template: NEW_TEMPLATE, templateSite: NEW_TEMPLATE_SITE })
             }
           />
         </Card>
@@ -275,7 +321,7 @@ export default function DmGenerator() {
               Analyse du site
             </SectionTitle>
             <p className="text-xs text-muted mb-4 leading-relaxed">
-              L’app ouvre le site, mesure ce qui cloche, puis l’IA rédige trois messages à partir de ces constats. Elle ne peut rien reprocher qui n’ait été mesuré.
+              L’app ouvre le site, mesure ce qui cloche, puis compose des messages à partir de ces seuls constats. Rien n’est inventé. C’est gratuit. Avec une clé d’API renseignée sur le serveur, la rédaction est confiée à l’IA.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-2">
@@ -346,21 +392,27 @@ export default function DmGenerator() {
                         </ol>
                       </div>
                     )}
-                    <div>
-                      <span className="label block mb-2">Trois messages proposés</span>
-                      <div className="space-y-2">
-                        {analysis.ai.dms.map((d, i) => (
-                          <div key={i} className="card-2 !rounded-2xl p-4">
-                            <div className="flex items-center justify-between gap-3 mb-2">
-                              <span className="pill bg-brand/15 text-brand"><Sparkles size={11} /> {d.angle}</span>
-                              <button className="btn-ghost !py-1.5" onClick={() => useProposal(d.texte)}>Utiliser</button>
-                            </div>
-                            <p className="text-sm text-txt/90 leading-relaxed whitespace-pre-wrap">{d.texte}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   </>
+                )}
+
+                {proposals.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <span className="label">{proposals.length} message{proposals.length > 1 ? 's' : ''} proposé{proposals.length > 1 ? 's' : ''}</span>
+                      <span className="text-[11px] text-muted">{proposals[0].ia ? 'Rédigés par l’IA' : 'Composés depuis les constats mesurés'}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {proposals.map((d, i) => (
+                        <div key={i} className="card-2 !rounded-2xl p-4">
+                          <div className="flex items-center justify-between gap-3 mb-2">
+                            <span className="pill bg-brand/15 text-brand"><Sparkles size={11} /> {d.angle}</span>
+                            <button className="btn-ghost !py-1.5" onClick={() => useProposal(d.texte)}>Utiliser</button>
+                          </div>
+                          <p className="text-sm text-txt/90 leading-relaxed whitespace-pre-wrap">{d.texte}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -478,7 +530,7 @@ export default function DmGenerator() {
           <button
             className="btn-ghost mt-3"
             onClick={() =>
-              add('dmTones', { id: uid(), label: 'Nouveau style', hint: 'Quand l’utiliser', emoji: false, template: 'Bonjour {prenom},\n\n{observation}\n\n{constat}\n\n{valeur}\n\n{question}' })
+              add('dmTones', { id: uid(), label: 'Nouveau style', hint: 'Quand l’utiliser', emoji: false, template: NEW_TEMPLATE, templateSite: NEW_TEMPLATE_SITE })
             }
           >
             <Plus size={14} /> Style
@@ -530,7 +582,14 @@ function ToneEditor({ tone, onPatch, onRemove }: { tone: DmTone; onPatch: (v: Pa
       </div>
       {open && (
         <div className="mt-4 space-y-3">
-          <textarea className="input !min-h-[190px] font-mono !text-[12.5px] leading-relaxed" value={tone.template} onChange={(e) => onPatch({ template: e.target.value })} />
+          <div>
+            <span className="label block mb-1.5">Message après un passage devant la boutique</span>
+            <textarea className="input !min-h-[170px] font-mono !text-[12.5px] leading-relaxed" value={tone.template} onChange={(e) => onPatch({ template: e.target.value })} />
+          </div>
+          <div>
+            <span className="label block mb-1.5">Message après l’analyse du site</span>
+            <textarea className="input !min-h-[150px] font-mono !text-[12.5px] leading-relaxed" value={tone.templateSite ?? ''} onChange={(e) => onPatch({ templateSite: e.target.value })} />
+          </div>
           <div className="flex items-center justify-between gap-3">
             <Toggle checked={tone.emoji} onChange={(emoji) => onPatch({ emoji })} label="Emoji par défaut" />
             <ConfirmDelete onConfirm={onRemove} label="Supprimer ce style" />

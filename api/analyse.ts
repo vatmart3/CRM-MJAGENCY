@@ -139,14 +139,10 @@ export default async function handler(req: Request): Promise<Response> {
 
   const audit = body.noSite ? null : await auditSite(body.url as string)
 
+  // Sans clé, on renvoie les constats mesurés. Le navigateur sait en faire des
+  // messages tout seul : la rédaction par IA est un supplément, pas une condition.
   const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) {
-    return json({
-      audit,
-      ai: null,
-      aiError: 'La clé ANTHROPIC_API_KEY n’est pas configurée. L’analyse technique fonctionne, la rédaction par IA non.',
-    })
-  }
+  if (!apiKey) return json({ audit, ai: null })
 
   try {
     const client = new Anthropic({ apiKey })

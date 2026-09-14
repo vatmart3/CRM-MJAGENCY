@@ -114,9 +114,11 @@ Vercel fournit une adresse en `.vercel.app`. Un nom de domaine à vous s'ajoute 
 
 ---
 
-## 7. Activer l'analyse de site par IA (facultatif)
+## 7. La rédaction par IA (facultatif, payant)
 
-Le générateur de DM peut ouvrir le site d'un prospect, mesurer ce qui cloche, puis faire rédiger trois messages par Claude. Sans cette étape, le générateur fonctionne quand même, avec ses modèles et ses formulations.
+**L'analyse du site est gratuite et ne demande aucune configuration.** Une fois le site déployé, le générateur ouvre le site du prospect, mesure une vingtaine de points, et compose trois messages à partir de ces constats. Cela ne coûte rien et ne dépend d'aucune clé.
+
+Cette étape n'ajoute qu'une chose : confier la rédaction à Claude plutôt qu'aux modèles de l'app. Les messages sont plus souples et mieux tournés, mais ils partent exactement des mêmes constats mesurés. Vous pouvez très bien ne jamais l'activer.
 
 1. Créer une clé sur [console.anthropic.com](https://console.anthropic.com), rubrique **API Keys**.
 2. Dans Vercel, **Settings**, puis **Environment Variables**, ajouter :
@@ -133,7 +135,9 @@ Quand Vercel affiche son avertissement sur les préfixes publics, il ne concerne
 
 **Qui peut lancer une analyse.** La fonction vérifie que l'appelant est connecté et que son adresse figure dans `allowed_emails`. Une personne extérieure qui trouverait l'adresse de la fonction est refusée, et ne consomme rien.
 
-**Ce que ça coûte.** Chaque analyse est un appel facturé à l'usage. D'après les tarifs publiés du modèle utilisé, comptez un ordre de grandeur de quelques centimes par analyse. Pour cinq DM par jour, cela reste très inférieur à un abonnement mensuel d'outil marketing. La variable `ANTHROPIC_EFFORT=low` réduit encore le coût et le temps de réponse.
+**Ce que ça coûte.** Chaque rédaction est un appel facturé à l'usage, de l'ordre de quelques centimes d'après les tarifs publiés du modèle. Il faut aussi créditer le compte Anthropic au départ. Si vous ne voulez rien payer, ne renseignez pas la clé : tout le reste fonctionne.
+
+La variable `ANTHROPIC_EFFORT=low` réduit le coût et le temps de réponse.
 
 **Tester en local.** La fonction ne tourne pas avec `npm run dev`, qui ne sert que le site. Il faut la commande de Vercel :
 
