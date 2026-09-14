@@ -1,4 +1,4 @@
-import { Bell, BookOpen, Briefcase, CalendarDays, Compass, FileText, Handshake, Instagram, KanbanSquare, LayoutDashboard, LineChart, LogOut, MessagesSquare, Plus, Search, Settings, Users, BellRing, X } from 'lucide-react'
+import { Bell, BookOpen, Briefcase, CalendarDays, Compass, FileText, Handshake, Instagram, KanbanSquare, LayoutDashboard, LineChart, LogOut, MessagesSquare, Plus, Search, Send, Settings, Users, BellRing, X } from 'lucide-react'
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Period, useStore } from '../store'
@@ -18,6 +18,7 @@ const NAV = [
   { to: '/apporteurs', icon: Handshake, label: 'Apporteurs d’affaires' },
   { to: '/planning', icon: CalendarDays, label: 'Planning du mois' },
   { to: '/instagram', icon: Instagram, label: 'Instagram' },
+  { to: '/dm', icon: Send, label: 'Générateur de DM' },
   { to: '/kpi', icon: LineChart, label: 'KPI hebdomadaires' },
   { to: '/playbook', icon: BookOpen, label: 'Playbook' },
   { to: '/strategie', icon: Compass, label: 'Stratégie' },

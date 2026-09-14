@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRightLeft, Plus, Search } from 'lucide-react'
 import { useStore } from '../store'
 import { CITIES, Prospect, SOURCES, User } from '../store/types'
@@ -16,6 +16,7 @@ const STALE_TIP = 'Aucun contact depuis plus de 7 jours'
 export default function Pipeline() {
   const { prospects, offers, users, settings, moveProspect, remove } = useStore()
   const uf = useStore((s) => s.ui.userFilter)
+  const nav = useNavigate()
   const stages = settings.pipelineStages
   const [sp, setSp] = useSearchParams()
   const stageParam = sp.get('stage') ?? ''
@@ -91,6 +92,7 @@ export default function Pipeline() {
     const next = nextStage(p.stage)
     return [
       { label: 'Modifier', onClick: () => openForm(p) },
+      { label: 'Écrire un DM', onClick: () => nav(`/dm?prospect=${p.id}`) },
       ...(next ? [{ label: 'Passer à l’étape suivante', onClick: () => moveProspect(p.id, next) }] : []),
       ...(p.stage !== 'Gagné' ? [{ label: 'Marquer gagné', onClick: () => moveProspect(p.id, 'Gagné') }] : []),
       ...(p.stage !== 'Perdu' ? [{ label: 'Marquer perdu', onClick: () => moveProspect(p.id, 'Perdu') }] : []),

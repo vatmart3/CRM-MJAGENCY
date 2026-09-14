@@ -47,11 +47,23 @@ Sans ces variables, rien ne change : l'app reste en local. Avec elles, un écran
 | `/apporteurs` | Apporteurs d’affaires — répertoire, profils cibles, grille de commissions |
 | `/planning` | Planning du mois — 4 semaines + semaine type |
 | `/instagram` | Instagram — calendrier éditorial, piliers, compteur de DM, mémo |
+| `/dm` | Générateur de DM — écrit le message dans le style choisi, à partir des infos du prospect |
 | `/kpi` | KPI hebdomadaires — saisie, historique, graphiques, diagnostic automatique |
 | `/playbook` | Playbook — offres, add-ons, script, objections, séquence de relance, 7 règles |
 | `/strategie` | Stratégie — 10 décisions à acter, questions structurantes |
 | `/point-hebdo` | Point hebdo — compte-rendu chronométré, actions créées en tâches |
 | `/reglages` | Réglages — agence, utilisateurs, pipeline, offres, commissions, cibles, étapes |
+
+## Générateur de DM
+
+Le message se compose à partir de cinq styles modifiables (amical, professionnel, direct, voisin, curieux) et de la structure en quatre temps du playbook : observation vraie, constat factuel, valeur gratuite, question fermée.
+
+- Choisir un prospect du CRM remplit le commerce, le prénom, la ville et le secteur.
+- Chaque temps propose des formulations prêtes, tirables au hasard, toutes modifiables.
+- Le texte final reste éditable à la main avant copie.
+- « DM envoyé » incrémente le compteur du jour et fait avancer le prospect dans le pipeline.
+
+Les styles sont des textes à trous. Les champs disponibles sont listés dans la page, sous « Modèles de message ».
 
 ## Stack
 

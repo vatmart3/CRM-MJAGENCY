@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { seed } from '../data/seed'
 import {
-  Addon, CommissionRule, Decision, DmLog, Followup, FollowupStep, KpiWeek, Meeting, Objection, Offer, Partner, PartnerProfile, Post, Project,
-  Prospect, Question, Quote, Rule, Settings, Task, User, UserId, WeekMeta, WeekSlot,
+  Addon, CommissionRule, Decision, DmLog, DmSnippet, DmTone, Followup, FollowupStep, KpiWeek, Meeting, Objection, Offer, Partner, PartnerProfile, Post,
+  Project, Prospect, Question, Quote, Rule, Settings, Task, User, UserId, WeekMeta, WeekSlot,
 } from './types'
 import { addDays, today } from '../lib/dates'
 import { uid } from '../lib/format'
@@ -36,6 +36,8 @@ export interface Collections {
   kpiWeeks: KpiWeek
   followups: Followup
   meetings: Meeting
+  dmTones: DmTone
+  dmSnippets: DmSnippet
 }
 export type CollectionKey = keyof Collections
 type IdOf<K extends CollectionKey> = K extends 'weekMeta' ? number : string
@@ -69,6 +71,8 @@ export interface AppState {
   followups: Followup[]
   dmLogs: DmLog[]
   meetings: Meeting[]
+  dmTones: DmTone[]
+  dmSnippets: DmSnippet[]
   ui: { period: Period; userFilter: UserFilter }
 
   add<K extends CollectionKey>(coll: K, item: Collections[K]): void
@@ -115,6 +119,8 @@ const initial = () => ({
   followups: seed.followups,
   dmLogs: seed.dmLogs,
   meetings: seed.meetings,
+  dmTones: seed.dmTones,
+  dmSnippets: seed.dmSnippets,
   ui: { period: 'month' as Period, userFilter: 'all' as UserFilter },
 })
 

@@ -1,5 +1,5 @@
 import {
-  Addon, CommissionRule, Decision, FollowupStep, KpiWeek, Meeting, Objection, Offer, Partner, PartnerProfile, Post, ProductionStep,
+  Addon, CommissionRule, Decision, DmSnippet, DmTone, FollowupStep, KpiWeek, Meeting, Objection, Offer, Partner, PartnerProfile, Post, ProductionStep,
   Project, Prospect, Question, Quote, Rule, Settings, Task, User, WeekMeta, WeekSlot, Followup, DmLog,
 } from '../store/types'
 import { addDays, mondayOf, today } from '../lib/dates'
@@ -417,8 +417,132 @@ export const meetings: Meeting[] = [
   },
 ]
 
+
+// ————————————————————————————————————————————————————————————————
+// Générateur de DM : styles de message et formulations proposées
+// ————————————————————————————————————————————————————————————————
+
+export const dmTones: DmTone[] = [
+  {
+    id: 'amical',
+    label: 'Amical',
+    hint: 'Tutoiement, ton léger. Pour les jeunes commerçants et les comptes qui postent eux-mêmes.',
+    emoji: true,
+    template: `Salut {prenom} 👋
+
+Je suis passé devant {commerce} {quand} et franchement, {observation}.
+
+Du coup j'ai tapé « {secteur} {ville} » sur Google pour voir, et {constat}.
+
+{valeur}
+
+{question}`,
+  },
+  {
+    id: 'professionnel',
+    label: 'Professionnel',
+    hint: 'Vouvoiement, phrases sobres, signature. Pour les commerces établis et les professions posées.',
+    emoji: false,
+    template: `Bonjour {prenom},
+
+Je me permets de vous écrire au sujet de {commerce}. {observation}.
+
+En cherchant « {secteur} {ville} » sur Google, {constat}.
+
+{valeur}
+
+{question}
+
+{moi} — {agence}`,
+  },
+  {
+    id: 'direct',
+    label: 'Direct',
+    hint: 'Court, sans détour. Pour les commerçants pressés, en coup de feu, qui lisent en diagonale.',
+    emoji: false,
+    template: `Bonjour {prenom},
+
+{observation}.
+
+Par contre, en cherchant « {secteur} {ville} » sur Google : {constat}.
+
+{valeur}
+
+{question}`,
+  },
+  {
+    id: 'local',
+    label: 'Voisin',
+    hint: 'Joue la proximité du Bassin de Thau. Pour installer la confiance avant de parler travail.',
+    emoji: true,
+    template: `Bonjour {prenom},
+
+On est une petite agence de {villeAgence}, on s'occupe des sites des commerces du coin. Je passe souvent devant {commerce}, et {observation}.
+
+J'ai regardé « {secteur} {ville} » sur Google par curiosité, {constat}.
+
+{valeur}
+
+{question}`,
+  },
+  {
+    id: 'curieux',
+    label: 'Curieux',
+    hint: 'Ouvre par une question, ne vend rien. Pour les commerces qui reçoivent déjà beaucoup de messages.',
+    emoji: false,
+    template: `Bonjour {prenom},
+
+Une question qui va vous paraître bizarre : vous savez combien de personnes trouvent {commerce} en cherchant « {secteur} {ville} » sur Google ?
+
+Je viens de regarder, {constat}.
+
+Ce n'est pas une question piège, {observation}.
+
+{valeur}
+
+{question}`,
+  },
+]
+
+const sn = (part: DmSnippet['part'], list: string[]): DmSnippet[] =>
+  list.map((text, i) => ({ id: `sn-${part}-${i + 1}`, part, text }))
+
+export const dmSnippets: DmSnippet[] = [
+  ...sn('observation', [
+    'la vitrine donne vraiment envie de pousser la porte',
+    'on voit tout de suite que le lieu est tenu avec soin',
+    'vos photos sont bien meilleures que la moyenne du secteur',
+    'l\u2019ambiance de votre compte donne envie d\u2019y passer',
+    'il y a toujours du monde quand je passe, ça tourne bien',
+    'votre devanture a un vrai cachet, on la remarque de loin',
+  ]),
+  ...sn('constat', [
+    'vous n\u2019apparaissez qu\u2019en deuxième page',
+    'c\u2019est un concurrent qui sort avant vous',
+    'votre fiche Google n\u2019a aucune photo récente',
+    'il n\u2019y a pas de site, seulement la fiche Google',
+    'le site met plus de cinq secondes à s\u2019ouvrir sur téléphone',
+    'on ne trouve ni les horaires ni un moyen de vous joindre en un clic',
+    'les avis sont bons mais il y en a trop peu pour peser',
+  ]),
+  ...sn('valeur', [
+    'Je peux vous envoyer les 3 points à corriger, c\u2019est gratuit et ça se règle en dix minutes.',
+    'Je vous fais une capture de ce que voient vos clients sur téléphone, vous verrez mieux que je ne l\u2019explique.',
+    'J\u2019ai un avant / après d\u2019un commerce d\u2019ici, je peux vous l\u2019envoyer pour que vous jugiez.',
+    'Je peux vous dire en deux lignes pourquoi Google vous place derrière, sans rien vous vendre.',
+    'Je vous note les deux réglages de la fiche Google qui changent le plus de choses, à faire vous-même.',
+  ]),
+  ...sn('question', [
+    'Ça vous intéresse ?',
+    'Je vous envoie ça ?',
+    'Vous voulez que je vous montre ?',
+    'Je vous l\u2019envoie ici ou par mail ?',
+    'Je vous mets ça de côté ?',
+  ]),
+]
+
 export const seed = {
   users, offers, addons, priceRules, script, objections, followupSequence, rules, productionSteps, partnerProfiles, commissionRules,
   partnerRules, partnerWarning, weekMeta, tasks, weekSlots, posts, decisions, questions, settings, prospects, projects, quotes, partners, kpiWeeks,
-  followups, dmLogs, meetings,
+  followups, dmLogs, meetings, dmTones, dmSnippets,
 }

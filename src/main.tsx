@@ -15,6 +15,7 @@ import Devis from './pages/Devis'
 import Apporteurs from './pages/Apporteurs'
 import Planning from './pages/Planning'
 import InstagramPage from './pages/Instagram'
+import DmGenerator from './pages/DmGenerator'
 import Kpi from './pages/Kpi'
 import Playbook from './pages/Playbook'
 import Strategie from './pages/Strategie'
@@ -35,6 +36,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/apporteurs" element={<Apporteurs />} />
           <Route path="/planning" element={<Planning />} />
           <Route path="/instagram" element={<InstagramPage />} />
+          <Route path="/dm" element={<DmGenerator />} />
           <Route path="/kpi" element={<Kpi />} />
           <Route path="/playbook" element={<Playbook />} />
           <Route path="/strategie" element={<Strategie />} />

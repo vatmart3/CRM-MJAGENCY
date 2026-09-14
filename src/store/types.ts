@@ -277,6 +277,51 @@ export interface Notification {
 }
 
 // ————————————————————————————————————————————————————————————————
+// Générateur de DM Instagram
+// ————————————————————————————————————————————————————————————————
+
+/** Les quatre temps du DM, dans l'ordre où ils s'enchaînent. */
+export type DmPart = 'observation' | 'constat' | 'valeur' | 'question'
+export const DM_PARTS: { key: DmPart; label: string; help: string }[] = [
+  { key: 'observation', label: 'Observation vraie', help: 'Un détail précis vu sur son compte ou en boutique. Jamais inventé.' },
+  { key: 'constat', label: 'Constat factuel', help: 'Ce qui manque ou ce qui coince, sans jugement.' },
+  { key: 'valeur', label: 'Valeur gratuite', help: 'Une idée actionnable tout de suite, offerte sans contrepartie.' },
+  { key: 'question', label: 'Question fermée', help: 'Une seule question, à laquelle on répond par oui ou non.' },
+]
+
+/** Un style de message. Le modèle est un texte à trous, entièrement modifiable. */
+export interface DmTone {
+  id: string
+  label: string
+  hint: string
+  emoji: boolean
+  template: string
+}
+
+/** Une formulation proposée pour l'un des quatre temps. */
+export interface DmSnippet {
+  id: string
+  part: DmPart
+  text: string
+}
+
+/** Champs remplaçables dans un modèle, affichés à l'utilisateur qui modifie un ton. */
+export const DM_PLACEHOLDERS: { key: string; label: string }[] = [
+  { key: 'prenom', label: 'Prénom du contact' },
+  { key: 'commerce', label: 'Nom du commerce' },
+  { key: 'ville', label: 'Ville du commerce' },
+  { key: 'secteur', label: 'Secteur d’activité' },
+  { key: 'observation', label: 'Observation vraie' },
+  { key: 'constat', label: 'Constat factuel' },
+  { key: 'valeur', label: 'Valeur gratuite' },
+  { key: 'question', label: 'Question fermée' },
+  { key: 'quand', label: 'Moment du passage' },
+  { key: 'moi', label: 'Votre prénom' },
+  { key: 'agence', label: 'Nom de l’agence' },
+  { key: 'villeAgence', label: 'Ville de l’agence' },
+]
+
+// ————————————————————————————————————————————————————————————————
 // Synchronisation : quelles données partent en base, et sous quelle clé.
 // ————————————————————————————————————————————————————————————————
 
@@ -285,6 +330,7 @@ export const SYNCED_COLLECTIONS = [
   'users', 'offers', 'addons', 'priceRules', 'objections', 'followupSequence', 'rules', 'partnerProfiles',
   'commissionRules', 'partnerRules', 'weekMeta', 'tasks', 'weekSlots', 'posts', 'decisions', 'questions',
   'prospects', 'projects', 'quotes', 'partners', 'kpiWeeks', 'followups', 'meetings', 'dmLogs',
+  'dmTones', 'dmSnippets',
 ] as const
 
 /** Objets uniques stockés sous leur propre nom. */

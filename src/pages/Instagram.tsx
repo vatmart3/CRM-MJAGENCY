@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Check, ChevronLeft, ChevronRight, Copy, ExternalLink, Minus, Pencil, Plus } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Check, ChevronLeft, ChevronRight, Copy, ExternalLink, Minus, Pencil, Plus, Send } from 'lucide-react'
 import { useStore } from '../store'
 import { Pillar, PILLARS, Post, POST_STATUSES, PostStatus } from '../store/types'
 import { PostForm } from '../components/forms'
@@ -90,6 +90,9 @@ export default function InstagramPage() {
           <div className="flex items-center gap-2 mt-5">
             <button className="btn-primary flex-1 justify-center" onClick={() => addDm(1)}><Plus size={15} /> 1 DM envoyé</button>
             <button className="btn-ghost !px-3" title="Retirer un DM" onClick={() => addDm(-1)} disabled={todayCount <= 0}><Minus size={15} /> 1</button>
+          </div>
+          <div className="mt-2">
+            <Link to="/dm" className="btn-ghost w-full justify-center"><Send size={14} /> Écrire un DM</Link>
           </div>
           <div className="mt-5 flex items-center gap-2 text-sm">
             <span>🔥</span>
