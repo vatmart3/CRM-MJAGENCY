@@ -462,7 +462,7 @@ function TopClients({ from, to }: { from: string; to: string }) {
         <CardHead title="Meilleurs clients" sub="CA encaissé sur la période" right={<Link to="/clients" className="btn-icon !w-8 !h-8"><MoreVertical size={16} /></Link>} />
       </div>
       {list.length === 0 ? (
-        <Empty icon={<Star size={22} />} title="Pas encore de client encaissé" text="Tes clients apparaîtront ici, classés par chiffre d’affaires." action={<button className="btn-primary" onClick={() => openEditor('recette')}>Ajoute ta première recette</button>} />
+        <Empty icon={<Star size={22} />} title="Aucun encaissement pour l’instant" text="Tes clients apparaîtront ici, classés par chiffre d’affaires." action={<button className="btn-primary" onClick={() => openEditor('recette')}>Ajoute ta première recette</button>} />
       ) : (
         <table className="w-full">
           <thead>
