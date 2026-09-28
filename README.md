@@ -1,5 +1,7 @@
 # MJAGENCY — Cockpit
 
+> **FLUX**, l’application de gestion financière (recettes, dépenses, URSSAF, trésorerie), vit dans le dossier [`flux/`](flux/README.md). Elle partage la base Supabase du cockpit et se déploie comme un second projet Vercel (Root Directory : `flux`).
+
 CRM + cockpit de pilotage pour une agence web de deux personnes (Jérémy — Production, Matheis — Acquisition).
 
 Interface sombre, épurée, une seule couleur d’accent (bleu `#0071E3`). Toutes les données du plan (tâches du mois, calendrier Instagram, questions structurantes, offres, commissions, objections, étapes de production, profils d’apporteurs) sont **pré-implantées au premier lancement** et **entièrement modifiables** depuis l’interface.
