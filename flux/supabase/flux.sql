@@ -71,7 +71,7 @@ create policy "flux : modification" on public.flux_records
 -- Une suppression dans FLUX est un archivage avec motif, tracé au journal.
 
 create or replace function public.flux_touch()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = public as $$
 begin
   new.updated_at := now();
   new.updated_by := auth.uid();
@@ -137,3 +137,31 @@ create policy "justificatifs : lecture" on storage.objects
 create policy "justificatifs : dépôt" on storage.objects
   for insert to authenticated with check (bucket_id = 'flux-justificatifs' and public.flux_user() is not null);
 -- Pas de suppression ni de remplacement : une pièce déposée reste.
+
+
+-- 5. Création de compte depuis l'écran de connexion ─────────────────────────
+-- Une adresse de la liste blanche est confirmée d'office à l'inscription :
+-- pas d'e-mail de validation à attendre. Toute autre adresse reste non
+-- confirmée, ne peut pas se connecter, et ne verrait de toute façon rien.
+create or replace function public.flux_autoconfirm()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if exists (select 1 from public.allowed_emails where lower(email) = lower(new.email)) then
+    new.email_confirmed_at := coalesce(new.email_confirmed_at, now());
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists flux_autoconfirm on auth.users;
+create trigger flux_autoconfirm before insert on auth.users
+  for each row execute function public.flux_autoconfirm();
+
+
+-- 6. Droits d'exécution ──────────────────────────────────────────────────────
+-- Les fonctions d'aide ne sont appelables que par un utilisateur connecté
+-- (les règles de sécurité en ont besoin), jamais anonymement.
+revoke execute on function public.flux_autoconfirm() from public, anon, authenticated;
+revoke execute on function public.flux_user() from public, anon;
+revoke execute on function public.flux_is_admin() from public, anon;
+grant execute on function public.flux_user() to authenticated;
+grant execute on function public.flux_is_admin() to authenticated;

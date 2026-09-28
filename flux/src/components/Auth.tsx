@@ -38,6 +38,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [syncErr, setSyncErr] = useState<string | null>(null)
 
   useEffect(() => onSyncStatus((s) => setSyncErr(s === 'error' ? getSyncError() : null)), [])
@@ -117,32 +118,62 @@ export function AuthGate({ children }: { children: ReactNode }) {
       </Shell>
     )
 
-  const signIn = async (e: React.FormEvent) => {
+  const explain = (msg: string) =>
+    msg === 'Invalid login credentials'
+      ? 'Adresse ou mot de passe incorrect.'
+      : /already registered/i.test(msg)
+        ? 'Un compte existe déjà avec cette adresse : connecte-toi.'
+        : /at least 6|Password should/i.test(msg)
+          ? 'Le mot de passe doit faire au moins 6 caractères.'
+          : /Email not confirmed/i.test(msg)
+            ? 'Cette adresse n’est pas autorisée à ouvrir FLUX.'
+            : msg
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!supabase) return
     setBusy(true)
     setError('')
-    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+    const creds = { email: email.trim(), password }
+    if (creating) {
+      // Seules les adresses de la liste blanche sont confirmées (déclencheur côté base).
+      const { data, error: err } = await supabase.auth.signUp(creds)
+      if (err) {
+        setBusy(false)
+        return setError(explain(err.message))
+      }
+      if (data.session) return setBusy(false)
+    }
+    const { error: err } = await supabase.auth.signInWithPassword(creds)
     setBusy(false)
-    if (err) setError(err.message === 'Invalid login credentials' ? 'Adresse ou mot de passe incorrect.' : err.message)
+    if (err) setError(explain(err.message))
   }
 
   return (
     <Shell>
-      <form onSubmit={signIn} className="space-y-3.5">
+      <form onSubmit={submit} className="space-y-3.5">
         <label className="block">
           <span className="block text-xs font-medium text-muted mb-1.5">Adresse e-mail</span>
           <input className="input" type="email" autoComplete="email" autoFocus required value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <label className="block">
-          <span className="block text-xs font-medium text-muted mb-1.5">Mot de passe</span>
-          <input className="input" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <span className="block text-xs font-medium text-muted mb-1.5">{creating ? 'Choisis un mot de passe' : 'Mot de passe'}</span>
+          <input className="input" type="password" autoComplete={creating ? 'new-password' : 'current-password'} minLength={creating ? 6 : undefined} required value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         {error && <p className="text-danger text-xs">{error}</p>}
         <button className="btn-primary w-full !mt-6" disabled={busy}>
-          {busy ? <Loader2 size={15} className="animate-spin" /> : <LogIn size={15} />} Se connecter
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <LogIn size={15} />} {creating ? 'Créer mon compte' : 'Se connecter'}
         </button>
       </form>
+      <button
+        className="text-xs text-muted hover:text-txt mt-5 block mx-auto"
+        onClick={() => {
+          setCreating(!creating)
+          setError('')
+        }}
+      >
+        {creating ? 'J’ai déjà un compte' : 'Première connexion ? Crée ton compte'}
+      </button>
     </Shell>
   )
 }
