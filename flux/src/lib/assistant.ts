@@ -486,6 +486,9 @@ type Sens = 'plus' | 'moins' | null
 /** « 3e trimestre 2026 », « septembre 2026 » : libellé de période en minuscule initiale. */
 const lc = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
 
+/** « la période du 3e trimestre 2026 », « la période de septembre 2026 » (toujours au féminin). */
+export const periodeUrssaf = (label: string) => `la période ${/trimestre/i.test(label) ? 'du' : 'de'} ${lc(label)}`
+
 const plusieurs = (l: string[]) => (l.length <= 1 ? l.join('') : `${l.slice(0, -1).join(', ')} et ${l[l.length - 1]}`)
 
 // ── Réponses ────────────────────────────────────────────────────────────────
@@ -668,14 +671,14 @@ function repUrssaf(d: AssistantState, today: string): Answer {
     const tot = eur(sum(enRetard.map((p) => p.detail.total)))
     parts.push(
       enRetard.length === 1
-        ? `Attention : ${lc(enRetard[0]!.label)} n’est pas marqué comme payé alors que l’échéance du ${fdate(enRetard[0]!.dateLimite)} est passée (${tot} de cotisations). Déclare-le vite, ou marque-le comme payé dans URSSAF si c’est fait.`
+        ? `Attention : ${periodeUrssaf(enRetard[0]!.label)} n’est pas marquée comme payée alors que l’échéance du ${fdate(enRetard[0]!.dateLimite)} est passée (${tot} de cotisations). Déclare-la vite, ou marque-la comme payée dans URSSAF si c’est fait.`
         : `Attention : ${enRetard.length} périodes échues ne sont pas marquées comme payées (${plusieurs(enRetard.slice(0, 3).map((p) => lc(p.label)))}${enRetard.length > 3 ? '…' : ''}), pour ${tot} de cotisations. Déclare-les vite, ou marque-les comme payées dans URSSAF si c’est fait.`,
     )
     chiffres.push({ label: 'Échu non payé', valeur: tot })
   }
   if (aVenir.length) {
     const p = aVenir[0]!
-    parts.push(`Tu dois ${eur(p.detail.total)} à l’URSSAF pour ${lc(p.label)} (CA encaissé ${eur(p.ca)}), à déclarer et payer avant le ${fdate(p.dateLimite)}.`)
+    parts.push(`Tu dois ${eur(p.detail.total)} à l’URSSAF pour ${periodeUrssaf(p.label)} (CA encaissé ${eur(p.ca)}), à déclarer et payer avant le ${fdate(p.dateLimite)}.`)
     chiffres.push({ label: `Échéance ${fdate(p.dateLimite)}`, valeur: eur(p.detail.total) })
   }
   if (enCours) {

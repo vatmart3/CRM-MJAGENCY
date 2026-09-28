@@ -15,6 +15,7 @@ import {
 import { addDays, fdate, fdateShort, inRange, startOfMonth, startOfWeek, today as todayFn } from './dates'
 import { eur, pct, plural, round2 } from './format'
 import { AiUnavailable, callAI } from './ai'
+import { periodeUrssaf } from './assistant'
 import { getSyncStatus, onSyncStatus } from './sync'
 
 export interface WeeklyReport {
@@ -23,7 +24,6 @@ export interface WeeklyReport {
 }
 
 const sum = (l: number[]) => round2(l.reduce((a, b) => a + b, 0))
-const lc = (s: string) => s.charAt(0).toLowerCase() + s.slice(1)
 
 /** Lundi de la semaine précédente : la semaine que résume le rapport du jour. */
 export const previousMonday = (ref = todayFn()) => addDays(startOfWeek(ref), -7)
@@ -129,7 +129,7 @@ function recommandationsOf(f: Facts): string[] {
       score: 100000 + tot,
       texte:
         f.urssafEchues.length === 1
-          ? `Déclare et paie ${lc(f.urssafEchues[0]!.periode)} à l’URSSAF (${eur(tot)}, échéance du ${fdate(f.urssafEchues[0]!.dateLimite)} dépassée), ou marque-le comme payé si c’est fait.`
+          ? `Déclare et paie ${periodeUrssaf(f.urssafEchues[0]!.periode)} à l’URSSAF (${eur(tot)}, échéance du ${fdate(f.urssafEchues[0]!.dateLimite)} dépassée), ou marque-la comme payée si c’est fait.`
           : `Régularise ${f.urssafEchues.length} périodes URSSAF échues (${eur(tot)} de cotisations), ou marque-les comme payées si c’est fait.`,
     })
   }
@@ -137,7 +137,7 @@ function recommandationsOf(f: Facts): string[] {
     c.push({ score: s.pourcentage >= 95 ? 90000 : 3000 + s.pourcentage * 10, texte: `Surveille le ${s.seuil} : ${s.pourcentage} % atteint (${eur(s.ca)} sur ${eur(s.montant)}). ${s.texte}` })
   if (f.urssafProches.length) {
     const p = f.urssafProches[0]!
-    c.push({ score: 50000 + p.cotisations, texte: `Déclare ${lc(p.periode)} avant le ${fdate(p.dateLimite)} : ${eur(p.cotisations)} de cotisations à payer.` })
+    c.push({ score: 50000 + p.cotisations, texte: `Déclare ${periodeUrssaf(p.periode)} avant le ${fdate(p.dateLimite)} : ${eur(p.cotisations)} de cotisations à payer.` })
   }
   if (f.retards.length) {
     const r = f.retards[0]!

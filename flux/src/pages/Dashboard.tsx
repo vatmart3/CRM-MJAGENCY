@@ -46,7 +46,7 @@ export default function Dashboard() {
   }, [d, period, t])
 
   const hasData = d.recettes.length > 0 || d.depenses.length > 0
-  const suffix = { mois: 'vs mois dernier', trimestre: 'vs trimestre précédent', annee: 'vs année précédente', perso: 'vs période précédente' }[period.kind]
+  const suffix = { mois: 'vs mois dernier', trimestre: 'vs trim. précédent', annee: 'vs an dernier', perso: 'vs avant' }[period.kind]
   const heure = new Date().getHours()
 
   return (
@@ -160,7 +160,7 @@ function Kpi({ label, value, delta, visual, icon, delay, negative, to }: {
       </div>
       <div className="flex items-end justify-between gap-2 mt-3">
         <Money value={value} cents={false} className={cx('big text-[24px] md:text-[30px]', negative && 'text-danger')} />
-        {visual && <span className="hidden sm:block">{visual}</span>}
+        {visual && <span className="hidden sm:block xl:hidden 2xl:block">{visual}</span>}
       </div>
       <div className="mt-2">{delta}</div>
     </Card>
@@ -184,7 +184,7 @@ function Hero({ mois, annee, treso }: { mois: ReturnType<typeof synthese>; annee
   // Niveau de la sphère : trésorerie disponible rapportée à trois mois de dépenses et de cotisations.
   const d = useFluxData()
   const reference = Math.max(1, ...douzeMois(d, t).slice(-3).map((m) => m.depenses + m.cotisations), d.settings.objectifMensuel * 0.5)
-  const level = treso.disponible <= 0 ? 0.04 : Math.min(0.96, 0.08 + treso.disponible / (reference * 3))
+  const level = treso.disponible <= 0 ? 0.04 : Math.min(0.82, 0.08 + treso.disponible / (reference * 4))
   return (
     <div className="card lg:col-span-2 fade-up relative overflow-hidden hero-grad p-5 md:p-7 min-h-[300px]">
       <div className="absolute inset-0 mosaic pointer-events-none" />
@@ -212,11 +212,13 @@ function Hero({ mois, annee, treso }: { mois: ReturnType<typeof synthese>; annee
             </div>
           </div>
         </div>
-        <div className="relative w-[210px] h-[210px] md:w-[240px] md:h-[240px] mx-auto">
-          <Suspense fallback={<div className="w-full h-full rounded-pill bg-card2/60" />}>
-            <LiquidSphere level={level} label={`Trésorerie disponible : ${eur0(treso.disponible)}`} />
-          </Suspense>
-          <span className="absolute bottom-1 inset-x-0 text-center text-[11px] text-muted">Trésorerie · {eurK(treso.disponible)}</span>
+        <div className="mx-auto flex flex-col items-center">
+          <div className="relative w-[200px] h-[200px] md:w-[220px] md:h-[220px]">
+            <Suspense fallback={<div className="w-full h-full rounded-pill bg-card2/60" />}>
+              <LiquidSphere level={level} label={`Trésorerie disponible : ${eur0(treso.disponible)}`} />
+            </Suspense>
+          </div>
+          <span className="mt-1 text-[11px] text-muted">Niveau de trésorerie · {eurK(treso.disponible)}</span>
         </div>
       </div>
     </div>
@@ -340,7 +342,7 @@ function Seuils() {
           <div key={s.key}>
             <div className="flex items-baseline justify-between gap-2 mb-2">
               <span className="text-sm font-medium">{s.label}</span>
-              <span className={cx('text-sm font-bold tnum', s.niveau === 'critique' ? 'text-danger' : s.niveau === 'attention' ? 'text-warn' : 'text-accent')}>{pct(s.ratio * 100)}</span>
+              <span className={cx('text-sm font-bold tnum whitespace-nowrap', s.niveau === 'critique' ? 'text-danger' : s.niveau === 'attention' ? 'text-warn' : 'text-accent')}>{pct(s.ratio * 100)}</span>
             </div>
             <ThresholdBar ratio={s.ratio} niveau={s.niveau} />
             <p className="text-[11.5px] text-muted mt-1.5">
@@ -388,8 +390,8 @@ function AEncaisser() {
             )
           })}
           {list[0]?.statut === 'En retard' && (
-            <button className="btn-outline w-full mt-2 !py-2 text-xs" onClick={() => openRelance(list[0]!.r.id)}>
-              <Send size={13} /> Relancer {clientName(d.clients.find((c) => c.id === list[0]!.r.clientId))} en un clic
+            <button className="btn-outline w-full mt-2 !py-2 text-xs !whitespace-normal" onClick={() => openRelance(list[0]!.r.id)}>
+              <Send size={13} className="shrink-0" /> <span className="truncate">Relancer {clientName(d.clients.find((c) => c.id === list[0]!.r.clientId))}</span>
             </button>
           )}
         </div>
@@ -414,10 +416,12 @@ function Echeances() {
             <span className="flex-1 min-w-0">
               <span className="block text-[13px] font-semibold">URSSAF · {next.label}</span>
               <span className="block text-[11px] text-muted">
-                {next.statut === 'En cours' ? 'Période en cours · ' : ''}avant le {fdate(next.dateLimite)} ({Math.max(0, diffDays(next.dateLimite, t))} j)
+                {next.statut === 'En cours' ? 'En cours · ' : ''}avant le {fdate(next.dateLimite)}
+              </span>
+              <span className="block text-[13px] font-bold tnum mt-0.5">
+                {eur0(next.detail.total)} <span className="text-[11px] font-medium text-muted">· J-{Math.max(0, diffDays(next.dateLimite, t))}</span>
               </span>
             </span>
-            <span className="text-[13px] font-bold tnum">{eur0(next.detail.total)}</span>
           </Link>
         )}
         {aConfirmer.map((a) => (
@@ -464,8 +468,8 @@ function TopClients({ from, to }: { from: string; to: string }) {
           <thead>
             <tr className="border-t border-line/50">
               <th className="th pl-5">Client</th>
-              <th className="th text-center cursor-pointer" onClick={() => setSort('nb')}>Factures {sort === 'nb' ? '↓' : '↕'}</th>
-              <th className="th text-right pr-5 cursor-pointer" onClick={() => setSort('total')}>Total encaissé {sort === 'total' ? '↓' : '↕'}</th>
+              <th className="th text-center cursor-pointer hidden sm:table-cell" onClick={() => setSort('nb')}>Factures {sort === 'nb' ? '↓' : '↕'}</th>
+              <th className="th text-right pr-5 cursor-pointer" onClick={() => setSort('total')}>Encaissé {sort === 'total' ? '↓' : '↕'}</th>
             </tr>
           </thead>
           <tbody>
@@ -480,7 +484,7 @@ function TopClients({ from, to }: { from: string; to: string }) {
                     </span>
                   </Link>
                 </td>
-                <td className="td text-center tnum">{x.nb}</td>
+                <td className="td text-center tnum hidden sm:table-cell">{x.nb}</td>
                 <td className="td text-right pr-5 font-semibold tnum">{eur(x.total)}</td>
               </tr>
             ))}
@@ -508,17 +512,19 @@ function AssistantCard() {
       <p className="relative text-[26px] font-semibold tracking-tight leading-tight mt-6">Pose une question à tes chiffres</p>
       <p className="relative text-sm text-muted mt-2">« Quel client m’a rapporté le plus cette année ? »</p>
       <form
-        className="relative mt-auto pt-6 flex gap-2"
+        className="relative mt-auto pt-6 space-y-2"
         onSubmit={(e) => {
           e.preventDefault()
           ask(q.trim() || 'Quel client m’a rapporté le plus cette année ?')
         }}
       >
-        <input className="input !rounded-pill !bg-bg/40 flex-1" placeholder="Combien en logiciels ce trimestre ?" value={q} onChange={(e) => setQ(e.target.value)} />
-        <button className="btn-primary !px-5">Demander</button>
-        <button type="button" onClick={() => ask('Est-ce que je risque de dépasser le seuil de TVA ?')} className="w-11 h-11 rounded-pill bg-accent/20 text-accent grid place-content-center shrink-0" aria-label="Question sur le seuil de TVA">
-          <Star size={16} />
-        </button>
+        <input className="input !rounded-pill !bg-bg/40" placeholder="Combien en logiciels ce trimestre ?" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="flex gap-2">
+          <button className="btn-primary flex-1">Demander</button>
+          <button type="button" onClick={() => ask('Est-ce que je risque de dépasser le seuil de TVA ?')} className="w-11 h-11 rounded-pill bg-accent/20 text-accent grid place-content-center shrink-0" aria-label="Question sur le seuil de TVA" title="Est-ce que je risque de dépasser le seuil de TVA ?">
+            <Star size={16} />
+          </button>
+        </div>
       </form>
     </div>
   )

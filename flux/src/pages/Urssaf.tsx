@@ -84,7 +84,7 @@ export default function Urssaf() {
                 </div>
               )}
               <a href="https://autoentrepreneur.urssaf.fr" target="_blank" rel="noreferrer" className="btn-outline w-full">
-                Déclarer sur autoentrepreneur.urssaf.fr <ExternalLink size={14} />
+                Déclarer sur le site de l’URSSAF <ExternalLink size={14} />
               </a>
             </div>
           </div>
@@ -240,10 +240,10 @@ function Livre() {
               {rows.map((r) => (
                 <tr key={r.id} className="row">
                   <td className="td pl-5 tnum">{fdate(r.dateEncaissement)}</td>
-                  <td className="td">{clientName(d.clients.find((c) => c.id === r.clientId))}</td>
+                  <td className="td whitespace-nowrap">{clientName(d.clients.find((c) => c.id === r.clientId))}</td>
                   <td className="td text-muted max-w-[260px] truncate">{r.libelle}</td>
                   <td className="td text-muted">{r.mode}</td>
-                  <td className="td text-muted">{r.numeroFacture || '—'}</td>
+                  <td className="td text-muted whitespace-nowrap">{r.numeroFacture || '—'}</td>
                   <td className="td pr-5 text-right tnum font-semibold">{eur(r.montant)}</td>
                 </tr>
               ))}

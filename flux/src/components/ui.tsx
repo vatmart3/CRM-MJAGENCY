@@ -111,15 +111,16 @@ export function CardHead({ title, right, sub }: { title: ReactNode; right?: Reac
 
 export function Delta({ value, suffix = 'vs mois dernier', invert = false }: { value: number | null; suffix?: string; invert?: boolean }) {
   if (value === null || !Number.isFinite(value)) return <span className="text-xs text-muted">{suffix === 'vs mois dernier' ? 'Premier mois suivi' : '—'}</span>
-  const up = value >= 0
+  if (value === 0) return <span className="text-xs text-muted whitespace-nowrap">stable {suffix}</span>
+  const up = value > 0
   const good = invert ? !up : up
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs">
+    <span className="inline-flex items-center gap-1.5 text-xs whitespace-nowrap max-w-full overflow-hidden">
       <span className={cx('inline-flex items-center gap-1 font-semibold tnum', good ? 'text-accent' : 'text-danger')}>
         {up ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-        {Math.abs(value * 100).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %
+        {Math.abs(value * 100).toLocaleString('fr-FR', { maximumFractionDigits: Math.abs(value) >= 1 ? 0 : 1 })} %
       </span>
-      <span className="text-muted">{suffix}</span>
+      <span className="text-muted truncate">{suffix}</span>
     </span>
   )
 }
