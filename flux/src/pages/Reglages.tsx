@@ -6,6 +6,7 @@ import { tauxTotal } from '../lib/finance'
 import { isCloud } from '../lib/supabase'
 import { cx, parseAmount, pct } from '../lib/format'
 import { today } from '../lib/dates'
+import { saveBlob } from '../lib/download'
 import { Card, CardHead, Field, MoneyInput, Notice, Page, Segmented, toast, Toggle } from '../components/ui'
 import { SplitField, openEditor } from '../components/editors'
 
@@ -46,11 +47,7 @@ export default function Reglages() {
   const backup = () => {
     const { clients, projets, recettes, depenses, categories, abonnements, declarations, rapports, settings, stats, journal } = useFlux.getState()
     const blob = new Blob([JSON.stringify({ app: 'FLUX', exportedAt: new Date().toISOString(), clients, projets, recettes, depenses, categories, abonnements, declarations, rapports, settings, stats, journal }, null, 2)], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `FLUX-sauvegarde-${today()}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
+    saveBlob(blob, `FLUX-sauvegarde-${today()}.json`).catch((e: Error) => toast({ title: 'Sauvegarde non enregistrée', text: e.message, tone: 'error' }))
   }
 
   return (

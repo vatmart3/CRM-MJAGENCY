@@ -21,6 +21,7 @@ import {
   toISO, today,
 } from './dates'
 import { eur, eur0, plain, round2 } from './format'
+import { saveBlob } from './download'
 
 export type ExportFormat = 'pdf' | 'csv'
 
@@ -30,19 +31,6 @@ export interface ExportState extends FluxData {
 }
 
 // ── Téléchargement ──────────────────────────────────────────────────────────
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.rel = 'noopener'
-  a.style.display = 'none'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 2000)
-}
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 
@@ -109,9 +97,9 @@ const csvCell = (v: string | number | null | undefined) => {
  * CSV pour Excel en français : séparateur « ; », UTF-8 avec BOM, fins de ligne CRLF,
  * nombres à virgule décimale sans séparateur de milliers, dates JJ/MM/AAAA.
  */
-export function downloadCSV(filename: string, rows: (string | number)[][]) {
+export function downloadCSV(filename: string, rows: (string | number)[][]): Promise<void> {
   const body = rows.map((r) => r.map(csvCell).join(';')).join('\r\n') + '\r\n'
-  saveBlob(new Blob(['﻿' + body], { type: 'text/csv;charset=utf-8' }), filename.endsWith('.csv') ? filename : `${filename}.csv`)
+  return saveBlob(new Blob(['﻿' + body], { type: 'text/csv;charset=utf-8' }), filename.endsWith('.csv') ? filename : `${filename}.csv`)
 }
 
 // ── Sélections ──────────────────────────────────────────────────────────────
@@ -334,7 +322,7 @@ async function registerPdf(spec: RegisterSpec) {
 
   spec.after?.(doc, lastY(doc), autoTable)
   decoratePages(doc, spec.settings, `${spec.title} · ${period.label}`)
-  saveBlob(doc.output('blob'), spec.filename)
+  await saveBlob(doc.output('blob'), spec.filename)
 }
 
 /** Livre des recettes : registre chronologique des encaissements (obligatoire en micro-entreprise). */
@@ -348,7 +336,7 @@ export async function exportLivreRecettes(data: FluxData, from: string, to: stri
   const head = ["Date d'encaissement", 'Client', 'Nature de la prestation', 'Montant', 'Mode de règlement', 'Référence de la facture']
 
   if (format === 'csv') {
-    downloadCSV(filename, [head, ...rows.map(line), ['', '', 'Total de la période', total, '', '']])
+    return downloadCSV(filename, [head, ...rows.map(line), ['', '', 'Total de la période', total, '', '']])
     return
   }
   await registerPdf({
@@ -398,7 +386,7 @@ export async function exportRegistreDepenses(data: FluxData, from: string, to: s
   const parCat = depensesParCategorie(data.depenses, data.categories, from, to).map((c) => ({ ...c, nb: rows.filter((d) => d.categorieId === c.id).length }))
 
   if (format === 'csv') {
-    downloadCSV(filename, [head, ...rows.map(line), ['', '', '', 'Total de la période', total, '', '', '', '']])
+    return downloadCSV(filename, [head, ...rows.map(line), ['', '', '', 'Total de la période', total, '', '', '', '']])
     return
   }
   const manquants = rows.filter((d) => !d.justificatif).length
@@ -975,7 +963,7 @@ export async function exportRapportMensuel(data: FluxData, month: string) {
   }
 
   decoratePages(doc, s, `FLUX — Rapport mensuel · ${moisNom}`)
-  saveBlob(doc.output('blob'), `FLUX-rapport-mensuel-${m.slice(0, 7)}.pdf`)
+  await saveBlob(doc.output('blob'), `FLUX-rapport-mensuel-${m.slice(0, 7)}.pdf`)
 }
 
 // ── CSV de toutes les tables ────────────────────────────────────────────────
@@ -1080,14 +1068,14 @@ export function tableRows(name: TableName, state: ExportState): (string | number
 }
 
 /** CSV d'une table complète, lignes archivées comprises. */
-export function exportTableCSV(name: TableName, state: ExportState) {
-  downloadCSV(`FLUX-${name}-${today()}.csv`, tableRows(name, state))
+export function exportTableCSV(name: TableName, state: ExportState): Promise<void> {
+  return downloadCSV(`FLUX-${name}-${today()}.csv`, tableRows(name, state))
 }
 
 /** Toutes les tables, l'une après l'autre (petit délai pour que le navigateur accepte chaque téléchargement). */
 export async function exportAllCSV(state: ExportState) {
   for (const [i, name] of TABLE_NAMES.entries()) {
     if (i > 0) await wait(450)
-    exportTableCSV(name, state)
+    await exportTableCSV(name, state)
   }
 }

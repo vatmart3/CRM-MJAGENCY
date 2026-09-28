@@ -109,8 +109,9 @@ export const openFile = async (ref: FileRef) => {
   const w = window.open('', '_blank')
   try {
     const url = await fileUrl(ref)
-    if (w) w.location.href = url
-    else window.location.href = url
+    // Fenêtre refusée (bloqueur, cadre intégré) : on ne quitte jamais l'app.
+    if (!w) throw new FileError('Le navigateur a bloqué l’ouverture du justificatif.')
+    w.location.href = url
   } catch (e) {
     w?.close()
     throw e

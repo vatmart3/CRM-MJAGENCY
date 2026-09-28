@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './index.css'
 import { AuthGate } from './components/Auth'
 import { Layout } from './components/Layout'
@@ -25,12 +25,15 @@ function AdminOnly({ children }: { children: React.ReactNode }) {
   return useIsAdmin() ? <>{children}</> : <Navigate to="/" replace />
 }
 
+// VITE_ROUTER=memory : version « un seul fichier » (artefact), sans adresse par page.
+const Router = import.meta.env.VITE_ROUTER === 'memory' ? MemoryRouter : BrowserRouter
+
 const Loading = () => <div className="h-40" />
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthGate>
-      <BrowserRouter>
+      <Router>
         <Suspense fallback={<Loading />}>
           <Routes>
             <Route element={<Layout />}>
@@ -51,7 +54,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             </Route>
           </Routes>
         </Suspense>
-      </BrowserRouter>
+      </Router>
     </AuthGate>
   </React.StrictMode>,
 )

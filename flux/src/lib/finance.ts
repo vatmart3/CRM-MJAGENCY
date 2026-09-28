@@ -198,7 +198,9 @@ export const urssafPeriods = (d: FluxData, ref = today()): UrssafPeriod[] => {
   const p = d.settings.periodicite
   const encaissees = d.recettes.filter(isEncaissee)
   const first = [...encaissees.map((r) => r.dateEncaissement), ...live(d.declarations).map((x) => x.debut)].sort()[0] ?? ref
-  const start = first < startOfYear(ref) ? first : startOfYear(ref)
+  // On part du premier encaissement (ou de la première déclaration saisie) : pas de périodes fantômes
+  // d'avant l'utilisation de FLUX.
+  const start = first
   const keys: string[] = []
   let cur = startOfMonth(start)
   while (cur <= ref) {

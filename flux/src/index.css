@@ -26,7 +26,8 @@
   --glass: 255 255 255;
 }
 
-[data-theme='jour'] {
+[data-theme='jour'],
+[data-theme='light'] {
   color-scheme: light;
   --bg: 245 245 247;
   --panel: 255 255 255;
@@ -81,7 +82,8 @@ body {
   .card {
     @apply bg-card rounded-card border border-line/60;
   }
-  [data-theme='jour'] .card {
+  [data-theme='jour'] .card,
+  [data-theme='light'] .card {
     @apply shadow-soft border-transparent;
   }
   .card-2 {
