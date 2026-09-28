@@ -17,9 +17,12 @@ alter table public.allowed_emails enable row level security;
 drop policy if exists "membres : lecture" on public.allowed_emails;
 create policy "membres : lecture" on public.allowed_emails for select to authenticated using (true);
 
--- ⚠️ Vérifier que les deux vraies adresses y figurent :
---   select * from public.allowed_emails;
 -- Jérémy (user_key = 'jeremy') est administrateur de FLUX, Matheis est associé.
+insert into public.allowed_emails (email, user_key) values
+  ('vatmart3@gmail.com',            'jeremy'),
+  ('jeremyvatuonepro@gmail.com',    'jeremy'),
+  ('matheisfarrieux@icloud.com',    'matheis')
+on conflict (email) do update set user_key = excluded.user_key;
 
 -- Qui est connecté ? 'jeremy', 'matheis' ou null.
 create or replace function public.flux_user()
