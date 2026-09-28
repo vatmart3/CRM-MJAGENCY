@@ -1,0 +1,10 @@
+{
+  "name": "FLUX — MJAGENCY",
+  "short_name": "FLUX",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0E0F10",
+  "theme_color": "#0E0F10",
+  "lang": "fr",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

@@ -1,0 +1,256 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Thèmes ──────────────────────────────────────────────────────────────────
+   « nuit » : l'interface de référence, fond anthracite et accent vert tendre.
+   « jour » : la charte MJAGENCY, fond #F5F5F7, accent bleu #0071E3.
+   Toutes les couleurs passent par ces variables : un composant ne code jamais une teinte en dur. */
+:root,
+[data-theme='nuit'] {
+  color-scheme: dark;
+  --bg: 14 15 16;
+  --panel: 20 21 23;
+  --card: 29 30 33;
+  --card2: 38 39 43;
+  --line: 45 46 50;
+  --txt: 245 245 247;
+  --muted: 141 143 149;
+  --accent: 196 242 106;
+  --accent-ink: 16 20 8;
+  --accent-deep: 94 158 47;
+  --expense: 150 153 160;
+  --warn: 255 166 43;
+  --danger: 255 95 87;
+  --ok: 196 242 106;
+  --glass: 255 255 255;
+}
+
+[data-theme='jour'],
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: 245 245 247;
+  --panel: 255 255 255;
+  --card: 255 255 255;
+  --card2: 242 242 245;
+  --line: 229 229 234;
+  --txt: 29 29 31;
+  --muted: 110 110 115;
+  --accent: 0 113 227;
+  --accent-ink: 255 255 255;
+  --accent-deep: 0 72 160;
+  --expense: 58 58 60;
+  --warn: 232 128 0;
+  --danger: 215 45 35;
+  --ok: 0 113 227;
+  --glass: 255 255 255;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+body {
+  @apply bg-bg text-txt font-sans antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.35);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--line));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@layer components {
+  .card {
+    @apply bg-card rounded-card border border-line/60;
+  }
+  [data-theme='jour'] .card,
+  [data-theme='light'] .card {
+    @apply shadow-soft border-transparent;
+  }
+  .card-2 {
+    @apply bg-card2 rounded-2xl;
+  }
+  .label {
+    @apply text-[11px] uppercase tracking-[0.1em] text-muted font-medium;
+  }
+  .h-card {
+    @apply text-[15px] font-semibold text-txt tracking-tight;
+  }
+  .input {
+    @apply w-full bg-card2 border border-line/80 rounded-xl px-3.5 py-2.5 text-[15px] md:text-sm text-txt placeholder:text-muted/70 outline-none transition-[border-color,box-shadow] duration-150;
+  }
+  .input:focus {
+    @apply border-accent/70;
+    box-shadow: 0 0 0 3px rgb(var(--accent) / 0.18);
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-pill px-4 py-2.5 text-sm font-semibold whitespace-nowrap select-none transition-[transform,background-color,border-color,opacity] duration-150 active:scale-[0.97] disabled:opacity-45 disabled:pointer-events-none;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-ink hover:brightness-105;
+  }
+  .btn-ghost {
+    @apply btn bg-card2 text-txt hover:bg-line/70;
+  }
+  .btn-outline {
+    @apply btn border border-line text-txt hover:border-muted/60;
+  }
+  .btn-danger {
+    @apply btn bg-danger/15 text-danger hover:bg-danger/25;
+  }
+  .btn-icon {
+    @apply inline-flex items-center justify-center w-9 h-9 rounded-pill text-muted hover:text-txt hover:bg-card2 transition-colors active:scale-95;
+  }
+  .pill {
+    @apply inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-pill px-3 py-1.5 text-xs font-medium bg-card2 text-txt border border-transparent transition-colors;
+  }
+  .chip-on {
+    @apply bg-accent text-ink;
+  }
+  .th {
+    @apply text-[11px] uppercase tracking-[0.08em] text-muted font-medium text-left py-3 px-3 whitespace-nowrap;
+  }
+  .td {
+    @apply py-3.5 px-3 text-sm align-middle;
+  }
+  .row {
+    @apply border-t border-line/50 transition-colors;
+  }
+  .row:hover {
+    background: rgb(var(--txt) / 0.025);
+  }
+  .fade-up {
+    @apply animate-fadeUp;
+  }
+  .big {
+    @apply font-bold tracking-tight leading-none tnum;
+  }
+}
+
+/* Barre de progression */
+.bar {
+  @apply h-2 rounded-pill overflow-hidden;
+  background: rgb(var(--txt) / 0.07);
+}
+.bar > span {
+  @apply block h-full rounded-pill;
+  transition: width 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Cases à cocher */
+input[type='checkbox'].cb {
+  @apply appearance-none w-[18px] h-[18px] rounded-md border border-line bg-card2 cursor-pointer grid place-content-center shrink-0;
+}
+input[type='checkbox'].cb:checked {
+  @apply bg-accent border-accent;
+}
+input[type='checkbox'].cb:checked::after {
+  content: '';
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid rgb(var(--accent-ink));
+  border-bottom: 2px solid rgb(var(--accent-ink));
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238D8F95' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+textarea.input {
+  min-height: 88px;
+  resize: vertical;
+}
+
+/* Fond de page : un léger halo d'accent en haut, pour la profondeur. */
+.page-glow {
+  background: radial-gradient(900px 420px at 70% -120px, rgb(var(--accent) / 0.07), transparent 70%);
+}
+
+/* Carte « héros » avec mosaïque, comme la carte premium de la maquette. */
+.hero-grad {
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgb(var(--accent) / 0.28), transparent 55%),
+    radial-gradient(90% 80% at 0% 100%, rgb(var(--accent-deep) / 0.35), transparent 60%),
+    rgb(var(--card));
+}
+.mosaic {
+  background-image:
+    linear-gradient(rgb(var(--glass) / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--glass) / 0.05) 1px, transparent 1px);
+  background-size: 14px 14px;
+  mask-image: linear-gradient(200deg, black 10%, transparent 60%);
+}
+
+/* Barre de navigation flottante façon dock */
+.dock {
+  background: rgb(var(--panel) / 0.78);
+  backdrop-filter: saturate(1.6) blur(18px);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Coche de validation */
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.check-draw {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: draw 520ms 120ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.ring-draw {
+  stroke-dasharray: 190;
+  stroke-dashoffset: 190;
+  animation: draw 620ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+/* Graphiques recharts */
+.recharts-cartesian-grid-horizontal line {
+  stroke: rgb(var(--line) / 0.7);
+}
+.recharts-tooltip-cursor {
+  fill: rgb(var(--txt) / 0.04) !important;
+}
+.recharts-text {
+  fill: rgb(var(--muted));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}
