@@ -1,9 +1,10 @@
 # Mettre FLUX en ligne
 
 > **État actuel (28/09/2026)** : FLUX est en ligne sur **https://flux-mjagency.vercel.app**
-> (projet Vercel `flux-mjagency`, Root Directory `flux`), branché sur son propre projet
-> Supabase **flux-mjagency** (région Paris). Les adresses autorisées pour Jérémy sont
-> vatmart3@gmail.com et jeremyvatuonepro@gmail.com ; celle de Matheis reste à ajouter.
+> (projet Vercel `flux-mjagency`, Root Directory `flux`), branché sur le projet Supabase
+> **comptabmj** (`rudvogzljdorbfssimsx`), où `supabase/flux.sql` a été exécuté.
+> Adresses autorisées : vatmart3@gmail.com et jeremyvatuonepro@gmail.com (Jérémy, admin),
+> matheisfarrieux@icloud.com (Matheis, associé).
 > À la première visite : « Première connexion ? Crée ton compte ».
 
 Objectif : Jérémy et Matheis ouvrent FLUX depuis l'ordinateur ou le téléphone et voient les mêmes chiffres en temps réel.
