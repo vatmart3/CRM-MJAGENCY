@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { BookOpen, Check, ExternalLink, FileDown, Landmark, Loader2, PiggyBank, Undo2 } from 'lucide-react'
 import { useFlux, useIsAdmin } from '../store'
-import { DeclarationStatut } from '../types'
-import { aMettreDeCote, clientName, isEncaissee, provisionUrssaf, tauxTotal, tresorerie, UrssafPeriod, urssafPeriods } from '../lib/finance'
+import { DeclarationStatut, USERS } from '../types'
+import { aMettreDeCoteTexte, acreActive, ASSOCIES, clientName, isEncaissee, provisionUrssaf, tauxResume, tauxSociales, tauxTotal, tresorerie, UrssafPeriod, urssafPeriods } from '../lib/finance'
 import { useFluxData } from '../lib/alerts'
 import { diffDays, endOfYear, fdate, startOfYear, today } from '../lib/dates'
 import { cx, eur, pct, round2 } from '../lib/format'
@@ -20,7 +20,6 @@ export default function Urssaf() {
   const current = periods.find((p) => p.statut === 'En cours')
   const next = [...periods].reverse().find((p) => p.statut === 'À faire' || p.statut === 'Déclarée')
   const provision = provisionUrssaf(d, t)
-  const taux = tauxTotal(d.settings)
   const treso = tresorerie(d, t)
   const derniere = [...d.recettes].filter(isEncaissee).sort((a, b) => b.dateEncaissement.localeCompare(a.dateEncaissement))[0]
 
@@ -32,6 +31,10 @@ export default function Urssaf() {
       caDeclare: p.declaration && p.declaration.statut !== 'À faire' ? p.declaration.caDeclare : p.ca,
       cotisations: p.declaration && p.declaration.statut !== 'À faire' ? p.declaration.cotisations : p.detail.total,
       dateLimite: p.dateLimite,
+      parts: {
+        jeremy: { ca: p.parts.jeremy.ca, cotisations: p.parts.jeremy.cotisations },
+        matheis: { ca: p.parts.matheis.ca, cotisations: p.parts.matheis.cotisations },
+      },
       statut,
       declareeLe: statut === 'À faire' ? '' : p.declaration?.declareeLe || t,
       payeeLe: statut === 'Payée' ? p.declaration?.payeeLe || t : '',
@@ -46,7 +49,7 @@ export default function Urssaf() {
   }
 
   return (
-    <Page title="URSSAF & obligations" subtitle={`Déclaration ${d.settings.periodicite} · cotisations sur le CA encaissé · ${pct(taux, 1)} au total`}>
+    <Page title="URSSAF & obligations" subtitle={`Déclaration ${d.settings.periodicite} · chacun déclare sa part du CA encaissé · ${tauxResume(d.settings)}`}>
       <div className="grid lg:grid-cols-3 gap-3 md:gap-4 mb-4">
         <div className="card lg:col-span-2 p-6 hero-grad relative overflow-hidden fade-up">
           <div className="absolute inset-0 mosaic pointer-events-none" />
@@ -63,7 +66,7 @@ export default function Urssaf() {
                   <p className="text-sm mt-1">
                     {eur(derniere.montant)} de {clientName(d.clients.find((c) => c.id === derniere.clientId))} le {fdate(derniere.dateEncaissement)}
                   </p>
-                  <p className="text-sm font-semibold text-accent mt-1">→ Mets {eur(aMettreDeCote(derniere.montant, d.settings))} de côté</p>
+                  <p className="text-sm font-semibold text-accent mt-1">→ Mets {aMettreDeCoteTexte(derniere, d)} de côté</p>
                 </div>
               )}
               {next ? (
@@ -95,10 +98,16 @@ export default function Urssaf() {
             <>
               <p className="text-xs text-muted">CA encaissé</p>
               <p className="big text-[30px]"><CountUp value={current.ca} /></p>
-              <div className="mt-4 space-y-2 text-sm">
-                <Line label={`Cotisations sociales (${pct(d.settings.tauxCotisations, 1)})`} value={current.detail.sociales} />
-                {d.settings.vlActif && <Line label={`Versement libératoire (${pct(d.settings.tauxVL, 1)})`} value={current.detail.vl} />}
-                <Line label={`Formation CFP (${pct(d.settings.tauxCFP, 2)})`} value={current.detail.cfp} />
+              <div className="mt-4 space-y-3 text-sm">
+                {ASSOCIES.map((w) => (
+                  <div key={w}>
+                    <Line label={`${USERS[w].prenom} · ${pct(tauxTotal(d.settings, w), 1)}`} value={current.parts[w].cotisations} />
+                    <p className="text-[11px] text-muted">
+                      sur {eur(current.parts[w].ca)} à déclarer
+                      {acreActive(d.settings, w) && <> · ACRE ({pct(tauxSociales(d.settings, w), 1)} de cotisations sociales)</>}
+                    </p>
+                  </div>
+                ))}
                 <div className="border-t border-line/60 pt-2">
                   <Line label="Total estimé" value={current.detail.total} strong />
                 </div>
@@ -115,18 +124,21 @@ export default function Urssaf() {
 
       <Card className="!p-0 overflow-hidden mb-4">
         <div className="px-5 pt-5">
-          <CardHead title="Déclarations" sub="Calcul automatique par période, figé au moment de la déclaration." />
+          <CardHead title="Déclarations" sub="Par période : CA à déclarer et cotisations de chacun sur son compte URSSAF, figés au moment de la déclaration." />
         </div>
         {periods.length === 0 ? (
           <Empty icon={<Landmark size={22} />} title="Aucune période" />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px]">
+            <table className="w-full min-w-[820px]">
               <thead>
                 <tr>
                   <th className="th pl-5">Période</th>
                   <th className="th text-right">CA encaissé</th>
                   <th className="th text-right">Cotisations</th>
+                  {ASSOCIES.map((w) => (
+                    <th key={w} className="th text-right">{USERS[w].prenom}</th>
+                  ))}
                   <th className="th">Date limite</th>
                   <th className="th">Statut</th>
                   <th className="th pr-5 text-right">Action</th>
@@ -136,11 +148,20 @@ export default function Urssaf() {
                 {periods.map((p) => (
                   <tr key={p.key} className="row">
                     <td className="td pl-5">
-                      <span className="font-medium">{p.label}</span>
+                      <span className="font-medium whitespace-nowrap">{p.label}</span>
                       <span className="block text-[11px] text-muted">{p.nbRecettes} encaissement{p.nbRecettes > 1 ? 's' : ''}</span>
                     </td>
                     <td className="td text-right tnum">{eur(p.ca)}</td>
                     <td className="td text-right tnum font-semibold">{eur(p.detail.total)}</td>
+                    {ASSOCIES.map((w) => (
+                      <td key={w} className="td text-right tnum whitespace-nowrap">
+                        {eur(p.parts[w].cotisations)}
+                        <span className="block text-[11px] text-muted">
+                          sur {eur(p.parts[w].ca)}
+                          {p.parts[w].acre && ' · ACRE'}
+                        </span>
+                      </td>
+                    ))}
                     <td className="td whitespace-nowrap">
                       {fdate(p.dateLimite)}
                       {p.statut === 'À faire' && diffDays(p.dateLimite, t) < 0 && <span className="block text-[11px] text-danger">dépassée</span>}

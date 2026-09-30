@@ -4,7 +4,7 @@ import { Archive, ArrowDownLeft, Check, FileText, Mail, MoreHorizontal, Papercli
 import { alive, PeriodFilter, useFlux, useIsAdmin } from '../store'
 import { MODES_REGLEMENT, Recette, RECETTE_STATUTS, RecetteStatut } from '../types'
 import { aMettreDeCote, clientName, joursDeRetard, statutOf } from '../lib/finance'
-import { fdate, inRange } from '../lib/dates'
+import { fdate, inRange, today } from '../lib/dates'
 import { cx, eur, normalize, plural, round2 } from '../lib/format'
 import { marquerEncaissee } from '../lib/actions'
 import { openFile } from '../lib/files'
@@ -191,6 +191,7 @@ function RowMenu({ r, statut }: { r: Recette; statut: RecetteStatut }) {
   const restore = useFlux((s) => s.restore)
   const isAdmin = useIsAdmin()
   const settings = useFlux((s) => s.settings)
+  const projets = useFlux((s) => s.projets)
   const pending = statut === 'En attente' || statut === 'En retard'
   return (
     <Menu
@@ -200,7 +201,7 @@ function RowMenu({ r, statut }: { r: Recette; statut: RecetteStatut }) {
           ? [{ label: 'Restaurer', icon: <Check size={15} />, onClick: () => restore('recettes', r.id), hidden: !isAdmin }]
           : [
               { label: 'Modifier', icon: <Pencil size={15} />, onClick: () => openEditor('recette', { id: r.id }) },
-              { label: `Marquer encaissée (${eur(aMettreDeCote(r.montant, settings))} de côté)`, icon: <Check size={15} />, onClick: () => marquerEncaissee(r), hidden: !pending },
+              { label: `Marquer encaissée (${eur(aMettreDeCote({ ...r, dateEncaissement: today() }, { projets, settings }))} de côté)`, icon: <Check size={15} />, onClick: () => marquerEncaissee(r), hidden: !pending },
               { label: 'Relancer par e-mail', icon: <Mail size={15} />, onClick: () => openRelance(r.id), hidden: !pending },
               {
                 label: 'Voir la facture',

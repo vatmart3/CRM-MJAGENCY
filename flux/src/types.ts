@@ -159,6 +159,8 @@ export interface Declaration extends Meta {
   statut: DeclarationStatut
   declareeLe: string
   payeeLe: string
+  /** Part de chaque associé, figée au moment de la déclaration. */
+  parts?: Record<UserId, { ca: number; cotisations: number }>
 }
 
 export interface Rapport extends Meta {
@@ -186,6 +188,14 @@ export interface Settings {
   vlActif: boolean
   tauxVL: number
   tauxCFP: number
+  /**
+   * ACRE de chaque associé : chacun déclare sa part du CA sur son propre compte URSSAF.
+   * Tant qu'elle court (encaissements jusqu'à `fin` incluse, sans limite si `fin` est vide),
+   * le taux de cotisations sociales de l'associé est réduit de `reductionACRE` %.
+   */
+  acre: Record<UserId, { actif: boolean; fin: string }>
+  /** Réduction ACRE en % du taux de cotisations sociales (la CFP et le versement libératoire ne changent pas). */
+  reductionACRE: number
   seuilTVA: number
   seuilTVAMajore: number
   plafondMicro: number

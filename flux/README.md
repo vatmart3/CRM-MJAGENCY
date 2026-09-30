@@ -25,12 +25,16 @@ Sans variables d'environnement, FLUX tourne en mode local (données dans le navi
 | `/projets`, `/projets/:id` | Marge réelle, reste à encaisser, part de chaque associé, classement par projet et par type de prestation |
 | `/clients` | Fiches clients et historique des factures |
 | `/abonnements` | Coût mensuel et annuel, prélèvements à confirmer en un clic, pistes d'économie |
-| `/urssaf` | Cotisations par période, provision « à mettre de côté », statut des déclarations, livre des recettes |
+| `/urssaf` | Cotisations par période et par associé (chacun déclare sa part, à son taux), provision « à mettre de côté », statut des déclarations, livre des recettes |
 | `/associes` | Parts de CA, charges, notes de frais et solde net de Jérémy et Matheis |
 | `/exports` | Rapport mensuel PDF, livre des recettes et registre des dépenses (PDF, CSV), export CSV de toutes les tables |
 | `/assistant` | Questions en langage naturel sur les chiffres, historique des résumés hebdomadaires |
 | `/journal` | Journal d'historique et archives (rien n'est jamais supprimé) |
 | `/reglages` | Taux, seuils, périodicité, objectif, solde de départ, catégories (administrateur) |
+
+## ACRE
+
+Chaque associé déclare sa part du CA encaissé (répartition du projet, sinon répartition par défaut) sur son propre compte URSSAF. Jérémy n'a pas l'ACRE, Matheis l'a : son taux de cotisations sociales est réduit (25 % par défaut, 50 % pour une activité démarrée avant le 1er juillet 2025) pour les encaissements jusqu'à la date de fin saisie dans **Réglages → ACRE**. La CFP et le versement libératoire ne changent pas.
 
 ## Droits
 

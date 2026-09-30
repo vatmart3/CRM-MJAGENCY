@@ -7,7 +7,7 @@ import { useFlux, useIsAdmin } from '../store'
 import { USERS } from '../types'
 import {
   aEncaisser, clientName, depensesParCategorie, douzeMois, echeancesAConfirmer, echeancesAVenir, joursDeRetard, previousPeriod, provisionUrssaf,
-  serieJours, seuils, synthese, tauxTotal, topClients, tresorerie, urssafPeriods,
+  serieJours, seuils, synthese, tauxIdentiques, tauxResume, topClients, tresorerie, urssafPeriods,
 } from '../lib/finance'
 import { useFluxData } from '../lib/alerts'
 import { cap, diffDays, endOfMonth, endOfYear, fdate, fdateShort, monthLabel, MOIS, startOfMonth, startOfYear, today, addMonths } from '../lib/dates'
@@ -65,7 +65,7 @@ export default function Dashboard() {
       {!hasData && <Welcome isAdmin={isAdmin} />}
       {hasData && isAdmin && !d.settings.tauxVerifies && (
         <Notice tone="warn" action={<Link to="/reglages" className="text-xs font-semibold text-warn whitespace-nowrap">Vérifier</Link>}>
-          Les taux URSSAF ({pct(tauxTotal(d.settings), 1)}) et les seuils sont des valeurs indicatives : confirme-les dans Réglages.
+          Les taux URSSAF ({tauxResume(d.settings)}) et les seuils sont des valeurs indicatives : confirme-les dans Réglages.
         </Notice>
       )}
 
@@ -100,7 +100,7 @@ export default function Dashboard() {
             icon={<Landmark size={15} />}
             label="Provision URSSAF"
             value={provisionUrssaf(d, t)}
-            sub={`${pct(tauxTotal(d.settings), 1)} du CA encaissé`}
+            sub={tauxIdentiques(d.settings) ? `${tauxResume(d.settings)} du CA encaissé` : tauxResume(d.settings)}
             to="/urssaf"
           />
           <SmallStat icon={<Receipt size={15} />} label="À encaisser" value={aEncaisser(d.recettes).reduce((a, x) => a + x.r.montant, 0)} sub={`${aEncaisser(d.recettes).length} facture(s)`} to="/recettes?statut=a-encaisser" />

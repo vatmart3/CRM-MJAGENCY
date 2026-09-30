@@ -7,13 +7,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import {
-  Abonnement, Categorie, Client, Declaration, DeclarationStatut, Depense, Periodicite, Projet, ProjetType, Recette, RecetteStatut, Settings, UserId,
+  Abonnement, Categorie, Client, Declaration, DeclarationStatut, Depense, Periodicite, Projet, ProjetType, Recette, RecetteStatut, Settings, UserId, USERS,
 } from '../types'
 import {
   addDays, addMonths, cap, diffDays, endOfMonth, endOfQuarter, endOfYear, fdate, fromISO, inRange, MOIS, monthLabel, monthShort, quarterOf,
   startOfMonth, startOfQuarter, startOfYear, toISO, today,
 } from './dates'
-import { round2 } from './format'
+import { eur, round2 } from './format'
 import type { PeriodFilter, PeriodKind } from '../store'
 
 export interface FluxData {
@@ -114,26 +114,126 @@ export const notesDues = (depenses: Depense[], who?: UserId) =>
 export const totalDu = (depenses: Depense[], who: UserId) => sum(notesDues(depenses, who).map((d) => d.montant))
 
 // ── Cotisations ─────────────────────────────────────────────────────────────
+//
+// Chaque associé déclare sa part du CA encaissé (répartition du projet, ou
+// répartition par défaut) sur son propre compte URSSAF, avec son propre taux :
+// l'ACRE réduit le taux de cotisations sociales de celui qui en bénéficie.
 
-export const tauxTotal = (s: Settings) => round2(s.tauxCotisations + (s.vlActif ? s.tauxVL : 0) + s.tauxCFP)
+export const ASSOCIES: UserId[] = ['jeremy', 'matheis']
 
-export const cotisationsDetail = (ca: number, s: Settings) => {
-  const sociales = round2((ca * s.tauxCotisations) / 100)
+/** L'ACRE de `who` s'applique-t-elle à un encaissement du `date` ? */
+export const acreActive = (s: Settings, who: UserId, date = today()) => {
+  const a = s.acre?.[who]
+  return !!a?.actif && (!a.fin || date <= a.fin)
+}
+
+/** Taux de cotisations sociales de `who` à cette date, ACRE comprise. */
+export const tauxSociales = (s: Settings, who: UserId, date = today()) =>
+  acreActive(s, who, date) ? round2(s.tauxCotisations * (1 - (s.reductionACRE ?? 0) / 100)) : s.tauxCotisations
+
+/** Taux total (sociales + versement libératoire + CFP) de `who` à cette date. */
+export const tauxTotal = (s: Settings, who: UserId = 'jeremy', date = today()) =>
+  round2(tauxSociales(s, who, date) + (s.vlActif ? s.tauxVL : 0) + s.tauxCFP)
+
+export const tauxIdentiques = (s: Settings, date = today()) => tauxTotal(s, 'jeremy', date) === tauxTotal(s, 'matheis', date)
+
+/** « 21,3 % » si les deux associés ont le même taux, sinon « Jérémy 21,3 % · Matheis 16 % (ACRE) ». */
+export const tauxResume = (s: Settings, date = today(), digits = 1) => {
+  const f = (n: number) => `${n.toLocaleString('fr-FR', { maximumFractionDigits: digits })} %`
+  if (tauxIdentiques(s, date)) return f(tauxTotal(s, 'jeremy', date))
+  return ASSOCIES.map((w) => `${USERS[w].prenom} ${f(tauxTotal(s, w, date))}${acreActive(s, w, date) ? ' (ACRE)' : ''}`).join(' · ')
+}
+
+export type CotisationsDetail = { sociales: number; vl: number; cfp: number; total: number }
+const ZERO: CotisationsDetail = { sociales: 0, vl: 0, cfp: 0, total: 0 }
+const addDetail = (a: CotisationsDetail, b: CotisationsDetail): CotisationsDetail => ({
+  sociales: round2(a.sociales + b.sociales),
+  vl: round2(a.vl + b.vl),
+  cfp: round2(a.cfp + b.cfp),
+  total: round2(a.total + b.total),
+})
+
+const detailAuTaux = (ca: number, s: Settings, tauxSoc: number): CotisationsDetail => {
+  const sociales = round2((ca * tauxSoc) / 100)
   const vl = s.vlActif ? round2((ca * s.tauxVL) / 100) : 0
   const cfp = round2((ca * s.tauxCFP) / 100)
   return { sociales, vl, cfp, total: round2(sociales + vl + cfp) }
 }
-export const cotisations = (ca: number, s: Settings) => cotisationsDetail(ca, s).total
 
-/** Ce qu'il faut mettre de côté pour une recette donnée. */
-export const aMettreDeCote = (montant: number, s: Settings) => cotisations(montant, s)
+/** Cotisations d'un associé sur un montant de CA encaissé le `date`. */
+export const cotisationsDetail = (ca: number, s: Settings, who: UserId = 'jeremy', date = today()) => detailAuTaux(ca, s, tauxSociales(s, who, date))
+
+/** Part de Jérémy (0 à 1) d'une recette ou d'une dépense, selon son projet. */
+export const partJeremyOf = (d: Pick<FluxData, 'projets' | 'settings'>, projetId: string) => {
+  const p = projetId ? d.projets.find((x) => x.id === projetId) : undefined
+  return (p ? p.partJeremy : d.settings.partDefautJeremy) / 100
+}
+
+export interface PartAssocie {
+  /** Part du CA encaissé à déclarer par cet associé. */
+  ca: number
+  detail: CotisationsDetail
+  /** Au moins un encaissement bénéficie de l'ACRE. */
+  acre: boolean
+}
+export interface CotisationsParAssocie {
+  jeremy: PartAssocie
+  matheis: PartAssocie
+  total: CotisationsDetail
+}
+
+/**
+ * Cotisations sur des recettes encaissées, associé par associé : chaque part de CA
+ * est regroupée par taux (l'ACRE dépend de la date d'encaissement), puis multipliée
+ * par ce taux, comme le fait l'URSSAF sur le CA déclaré.
+ */
+export const cotisationsSur = (recettes: Pick<Recette, 'montant' | 'projetId' | 'dateEncaissement'>[], d: Pick<FluxData, 'projets' | 'settings'>): CotisationsParAssocie => {
+  const s = d.settings
+  const buckets = { jeremy: new Map<number, number>(), matheis: new Map<number, number>() }
+  const acre = { jeremy: false, matheis: false }
+  for (const r of recettes) {
+    const k = partJeremyOf(d, r.projetId)
+    const date = r.dateEncaissement || today()
+    for (const [who, part] of [['jeremy', k], ['matheis', 1 - k]] as const) {
+      if (part <= 0 || !r.montant) continue
+      const t = tauxSociales(s, who, date)
+      if (acreActive(s, who, date)) acre[who] = true
+      buckets[who].set(t, (buckets[who].get(t) ?? 0) + r.montant * part)
+    }
+  }
+  const one = (who: UserId): PartAssocie => {
+    let ca = 0
+    let detail = ZERO
+    for (const [t, c] of buckets[who]) {
+      ca += c
+      detail = addDetail(detail, detailAuTaux(c, s, t))
+    }
+    return { ca: round2(ca), detail, acre: acre[who] }
+  }
+  const jeremy = one('jeremy')
+  const matheis = one('matheis')
+  return { jeremy, matheis, total: addDetail(jeremy.detail, matheis.detail) }
+}
+
+/** Ce qu'il faut mettre de côté pour une recette donnée (les deux associés ensemble). */
+export const aMettreDeCote = (r: Pick<Recette, 'montant' | 'projetId' | 'dateEncaissement'>, d: Pick<FluxData, 'projets' | 'settings'>) => cotisationsSur([r], d).total.total
+
+/** « 212,00 € (Jérémy 148,40 € · Matheis 63,60 €) », ou le seul montant si un associé a tout. */
+export const aMettreDeCoteTexte = (r: Pick<Recette, 'montant' | 'projetId' | 'dateEncaissement'>, d: Pick<FluxData, 'projets' | 'settings'>) => {
+  const c = cotisationsSur([r], d)
+  const parts = ASSOCIES.filter((w) => c[w].ca > 0)
+  if (parts.length < 2) return eur(c.total.total) + (parts[0] ? ` (${USERS[parts[0]].prenom})` : '')
+  return `${eur(c.total.total)} (${parts.map((w) => `${USERS[w].prenom} ${eur(c[w].detail.total)}`).join(' · ')})`
+}
+
+const encaisseesEntre = (recettes: Recette[], from: string, to: string) => recettes.filter((r) => isEncaissee(r) && inRange(r.dateEncaissement, from, to))
 
 // ── Synthèse d'une période ──────────────────────────────────────────────────
 
 export const synthese = (d: FluxData, from: string, to: string) => {
   const ca = caEncaisse(d.recettes, from, to)
   const dep = depensesTotal(d.depenses, from, to)
-  const cot = cotisations(ca, d.settings)
+  const cot = cotisationsSur(encaisseesEntre(d.recettes, from, to), d).total.total
   return { ca, depenses: dep, cotisations: cot, resultat: round2(ca - dep - cot) }
 }
 
@@ -187,7 +287,9 @@ export interface UrssafPeriod {
   fin: string
   label: string
   ca: number
-  detail: ReturnType<typeof cotisationsDetail>
+  detail: CotisationsDetail
+  /** CA à déclarer et cotisations de chaque associé, sur son propre compte URSSAF. */
+  parts: Record<UserId, { ca: number; cotisations: number; acre: boolean }>
   dateLimite: string
   statut: DeclarationStatut | 'En cours'
   declaration?: Declaration
@@ -213,11 +315,16 @@ export const urssafPeriods = (d: FluxData, ref = today()): UrssafPeriod[] => {
       const b = periodBounds(key)
       const rs = encaissees.filter((r) => inRange(r.dateEncaissement, b.debut, b.fin))
       const declaration = live(d.declarations).find((x) => x.id === key)
-      // Une fois déclarée, la période garde le CA déclaré, même si une recette est corrigée après.
-      const ca = declaration && declaration.statut !== 'À faire' ? declaration.caDeclare : sum(rs.map((r) => r.montant))
-      const detail = declaration && declaration.statut !== 'À faire' ? { ...cotisationsDetail(ca, d.settings), total: declaration.cotisations } : cotisationsDetail(ca, d.settings)
+      const calc = cotisationsSur(rs, d)
+      // Une fois déclarée, la période garde le CA et les cotisations déclarés, même si une recette est corrigée après.
+      const figee = declaration && declaration.statut !== 'À faire' ? declaration : undefined
+      const ca = figee ? figee.caDeclare : round2(calc.jeremy.ca + calc.matheis.ca)
+      const detail = figee ? { ...calc.total, total: figee.cotisations } : calc.total
+      const part = (who: UserId) =>
+        figee?.parts?.[who] ? { ...figee.parts[who], acre: calc[who].acre } : { ca: calc[who].ca, cotisations: calc[who].detail.total, acre: calc[who].acre }
+      const parts = { jeremy: part('jeremy'), matheis: part('matheis') }
       const statut: UrssafPeriod['statut'] = declaration?.statut ?? (b.fin < ref ? 'À faire' : 'En cours')
-      return { key, ...b, ca, detail, dateLimite: dateLimite(key), statut, declaration, nbRecettes: rs.length }
+      return { key, ...b, ca, detail, parts, dateLimite: dateLimite(key), statut, declaration, nbRecettes: rs.length }
     })
     .reverse()
 }
@@ -323,9 +430,11 @@ export const projetStats = (p: Projet, d: FluxData) => {
   const deps = live(d.depenses).filter((x) => x.projetId === p.id)
   const depenses = sum(deps.map((x) => x.montant))
   const marge = round2(encaisse - depenses)
-  const cot = cotisations(encaisse, d.settings)
+  const cots = cotisationsSur(rs.filter(isEncaissee), d)
+  const cot = cots.total.total
   const margeNette = round2(marge - cot)
-  const partJ = round2((margeNette * p.partJeremy) / 100)
+  // Chacun supporte ses propres cotisations : l'ACRE de l'un ne profite pas à l'autre.
+  const partJ = round2((marge * p.partJeremy) / 100 - cots.jeremy.detail.total)
   return {
     recettes: rs,
     depensesListe: deps,
@@ -336,6 +445,8 @@ export const projetStats = (p: Projet, d: FluxData) => {
     marge,
     margePct: encaisse > 0 ? marge / encaisse : 0,
     cotisations: cot,
+    cotisationsJeremy: cots.jeremy.detail.total,
+    cotisationsMatheis: cots.matheis.detail.total,
     margeNette,
     partJeremy: partJ,
     partMatheis: round2(margeNette - partJ),
@@ -381,23 +492,14 @@ export const clientName = (c?: Client) => (c ? c.entreprise || c.nom : 'Client i
 // ── Répartition associés ────────────────────────────────────────────────────
 
 export const repartition = (d: FluxData, from: string, to: string) => {
-  const part = (projetId: string) => {
-    const p = projetId ? d.projets.find((x) => x.id === projetId) : undefined
-    return (p ? p.partJeremy : d.settings.partDefautJeremy) / 100
-  }
-  const out = { jeremy: { ca: 0, cotisations: 0, depenses: 0 }, matheis: { ca: 0, cotisations: 0, depenses: 0 } }
-  for (const r of d.recettes) {
-    if (!isEncaissee(r) || !inRange(r.dateEncaissement, from, to)) continue
-    const k = part(r.projetId)
-    const cot = cotisations(r.montant, d.settings)
-    out.jeremy.ca += r.montant * k
-    out.matheis.ca += r.montant * (1 - k)
-    out.jeremy.cotisations += cot * k
-    out.matheis.cotisations += cot * (1 - k)
+  const cot = cotisationsSur(encaisseesEntre(d.recettes, from, to), d)
+  const out = {
+    jeremy: { ca: cot.jeremy.ca, cotisations: cot.jeremy.detail.total, depenses: 0, acre: cot.jeremy.acre },
+    matheis: { ca: cot.matheis.ca, cotisations: cot.matheis.detail.total, depenses: 0, acre: cot.matheis.acre },
   }
   for (const x of live(d.depenses)) {
     if (!inRange(x.date, from, to)) continue
-    const k = part(x.projetId)
+    const k = partJeremyOf(d, x.projetId)
     out.jeremy.depenses += x.montant * k
     out.matheis.depenses += x.montant * (1 - k)
   }
@@ -405,7 +507,7 @@ export const repartition = (d: FluxData, from: string, to: string) => {
     const o = out[who]
     const resultat = round2(o.ca - o.cotisations - o.depenses)
     const du = totalDu(d.depenses, who)
-    return { ca: round2(o.ca), cotisations: round2(o.cotisations), depenses: round2(o.depenses), resultat, du, solde: round2(resultat + du) }
+    return { ca: round2(o.ca), cotisations: round2(o.cotisations), depenses: round2(o.depenses), acre: o.acre, resultat, du, solde: round2(resultat + du) }
   }
   return { jeremy: fin('jeremy'), matheis: fin('matheis') }
 }

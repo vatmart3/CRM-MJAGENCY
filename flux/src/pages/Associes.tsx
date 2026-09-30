@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom'
 import { Info } from 'lucide-react'
 import { PeriodFilter } from '../store'
 import { USERS, UserId } from '../types'
-import { clientName, isEncaissee, projetStats, rangeFor, repartition } from '../lib/finance'
+import { acreActive, clientName, isEncaissee, projetStats, rangeFor, repartition, tauxTotal } from '../lib/finance'
 import { useFluxData } from '../lib/alerts'
 import { inRange, today } from '../lib/dates'
-import { cx, eur, round2 } from '../lib/format'
-import { Avatar, Card, CardHead, Money, Page } from '../components/ui'
+import { cx, eur, pct, round2 } from '../lib/format'
+import { Avatar, Card, CardHead, Money, Page, Tag } from '../components/ui'
 import { PeriodPicker } from '../components/PeriodPicker'
 
 export default function Associes() {
@@ -40,7 +40,10 @@ export default function Associes() {
                 <div className="flex items-center gap-3">
                   <Avatar name={USERS[who].nom} size={44} tone={who === 'jeremy' ? 'accent' : 'muted'} />
                   <div>
-                    <p className="font-semibold">{USERS[who].nom}</p>
+                    <p className="font-semibold flex items-center gap-2">
+                      {USERS[who].nom}
+                      {acreActive(d.settings, who) ? <Tag tone="accent">ACRE</Tag> : <Tag>Sans ACRE</Tag>}
+                    </p>
                     <p className="text-xs text-muted">{total > 0 ? `${Math.round((r.ca / total) * 100)} % du CA de la période` : 'Aucun encaissement sur la période'}</p>
                   </div>
                 </div>
@@ -48,7 +51,7 @@ export default function Associes() {
                 <Money value={r.solde} className={cx('big text-[40px]', r.solde < 0 && 'text-danger')} />
                 <div className="mt-5 space-y-2 text-sm">
                   <Row label="Part de CA générée" value={r.ca} />
-                  <Row label="− Part des cotisations" value={-r.cotisations} />
+                  <Row label={`− Ses cotisations URSSAF (${pct(tauxTotal(d.settings, who), 1)})`} value={-r.cotisations} />
                   <Row label="− Part des dépenses" value={-r.depenses} />
                   <div className="border-t border-line/60 pt-2"><Row label="= Résultat attribuable" value={r.resultat} strong /></div>
                   <Row label="+ Notes de frais à lui rembourser" value={r.du} accent={r.du > 0} />
@@ -113,7 +116,7 @@ export default function Associes() {
 
       <p className="text-xs text-muted flex items-start gap-2 max-w-2xl">
         <Info size={14} className="shrink-0 mt-0.5" />
-        Les cotisations suivent la répartition de la recette qui les génère ; les dépenses liées à un projet suivent sa répartition, les autres la répartition par défaut ({d.settings.partDefautJeremy} / {100 - d.settings.partDefautJeremy}, modifiable dans Réglages). Les notes de frais dues ne dépendent pas de la période.
+        Chacun déclare sa part du CA encaissé et paie ses cotisations à son propre taux (ACRE réglable dans Réglages) ; les dépenses liées à un projet suivent sa répartition, les autres la répartition par défaut ({d.settings.partDefautJeremy} / {100 - d.settings.partDefautJeremy}, modifiable dans Réglages). Les notes de frais dues ne dépendent pas de la période.
       </p>
     </Page>
   )

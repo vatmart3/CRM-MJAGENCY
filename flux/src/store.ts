@@ -76,7 +76,7 @@ const FIELD_LABEL: Record<string, string> = {
   recurrente: 'récurrente', nom: 'nom', montantPrevu: 'montant prévu', partJeremy: 'répartition', prochainPrelevement: 'prochain prélèvement',
   actif: 'actif', utilise: 'utilisé', frequence: 'fréquence', entreprise: 'entreprise', email: 'e-mail', telephone: 'téléphone', ville: 'ville',
   activite: 'activité', notes: 'notes', type: 'type', dateDebut: 'début', dateLivraison: 'livraison', caDeclare: 'CA déclaré', cotisations: 'cotisations',
-  tauxCotisations: 'taux de cotisations', vlActif: 'versement libératoire', tauxVL: 'taux du versement libératoire', tauxCFP: 'taux CFP',
+  tauxCotisations: 'taux de cotisations', vlActif: 'versement libératoire', tauxVL: 'taux du versement libératoire', tauxCFP: 'taux CFP', acre: 'ACRE des associés', reductionACRE: 'réduction ACRE',
   seuilTVA: 'seuil de franchise TVA', seuilTVAMajore: 'seuil TVA majoré', plafondMicro: 'plafond micro', periodicite: 'périodicité URSSAF',
   objectifMensuel: 'objectif mensuel', soldeInitial: 'solde de départ', dateSoldeInitial: 'date du solde de départ', partDefautJeremy: 'répartition par défaut',
   delaiPaiementJours: 'délai de paiement', prefixeFacture: 'préfixe de facture', tauxVerifies: 'taux vérifiés', signatureRelance: 'signature des relances',
