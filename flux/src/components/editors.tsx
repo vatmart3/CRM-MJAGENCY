@@ -7,7 +7,7 @@ import {
 } from '../types'
 import { addDays, fdate, today } from '../lib/dates'
 import { cx, eur, normalize, round2 } from '../lib/format'
-import { aMettreDeCote, clientName, nextInvoiceNumber, statutOf } from '../lib/finance'
+import { aMettreDeCoteTexte, clientName, nextInvoiceNumber, statutOf } from '../lib/finance'
 import { fileUrl, fmtSize, saveFile } from '../lib/files'
 import { scanReceipt } from '../lib/scan'
 import { Chips, Field, MoneyInput, Notice, Segmented, Sheet, toast, Toggle } from './ui'
@@ -253,7 +253,7 @@ function RecetteEditor() {
     else s.create('recettes', data)
     close()
     if (devientEncaissee)
-      toast({ title: existing ? 'Recette encaissée' : 'Recette enregistrée', text: `Mets ${eur(aMettreDeCote(r.montant, s.settings))} de côté pour l’URSSAF.`, tone: 'success' })
+      toast({ title: existing ? 'Recette encaissée' : 'Recette enregistrée', text: `Mets ${aMettreDeCoteTexte(data, s)} de côté pour l’URSSAF.`, tone: 'success' })
     else toast({ title: existing ? 'Recette modifiée' : 'Recette enregistrée', text: encaissee ? undefined : `En attente de paiement, échéance le ${fdate(r.dateEcheance)}.`, tone: 'success' })
   }
 
@@ -273,7 +273,7 @@ function RecetteEditor() {
         <MoneyInput big value={r.montant} onChange={(montant) => set({ montant })} autoFocus={!existing} />
         {r.montant > 0 && encaissee && (
           <p className="text-xs text-muted -mt-1">
-            À mettre de côté pour l’URSSAF : <b className="text-txt tnum">{eur(aMettreDeCote(r.montant, s.settings))}</b>
+            À mettre de côté pour l’URSSAF : <b className="text-txt tnum">{aMettreDeCoteTexte(r, s)}</b>
           </p>
         )}
         <Field label="Client">

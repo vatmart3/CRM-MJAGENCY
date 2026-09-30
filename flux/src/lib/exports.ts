@@ -13,8 +13,8 @@ import {
   Categorie, Client, Depense, ENTITY_LABEL, JournalEntry, Meta, PAYE_PAR_LABEL, Projet, Recette, Settings, UserId, USERS,
 } from '../types'
 import {
-  FluxData, clientName, coutMensuel, cotisationsDetail, depensesParCategorie, douzeMois, isEncaissee, joursDeRetard, periodKey, provisionUrssaf,
-  seuils, statutOf, synthese, tauxTotal, topClients, urssafPeriods,
+  FluxData, ASSOCIES, acreActive, clientName, coutMensuel, depensesParCategorie, douzeMois, isEncaissee, joursDeRetard, periodKey, provisionUrssaf,
+  seuils, statutOf, synthese, tauxIdentiques, tauxResume, tauxTotal, topClients, urssafPeriods,
 } from './finance'
 import {
   addMonths, cap, endOfMonth, endOfQuarter, endOfYear, fdate, fdateShort, inRange, monthLabel, quarterOf, startOfMonth, startOfQuarter, startOfYear,
@@ -563,7 +563,7 @@ export async function exportRapportMensuel(data: FluxData, month: string) {
     {
       label: 'Cotisations URSSAF',
       value: cur.cotisations,
-      caption: `Estimées à ${pctTxt(tauxTotal(s))} du CA`,
+      caption: tauxIdentiques(s, ref) ? `Estimées à ${tauxResume(s, ref)} du CA` : 'Au taux de chacun (ACRE)',
       varia: variationOf(cur.cotisations, prev.cotisations),
       goodUp: null,
     },
@@ -818,16 +818,18 @@ export async function exportRapportMensuel(data: FluxData, month: string) {
     fill(doc, C.panel)
     doc.roundedRect(M, boxY, LW - 3, BH, 3.2, 3.2, 'F')
     const ca = curP?.ca ?? 0
-    const det = curP && curP.statut !== 'En cours' && curP.declaration ? curP.detail : cotisationsDetail(ca, s)
+    const totalCot = curP?.detail.total ?? 0
     font(doc, 7, 'bold', C.muted)
     txt(doc, `PÉRIODE EN COURS · ${(curP?.label ?? '').toUpperCase()}`, M + 5, boxY + 7, { charSpace: 0.2 })
     font(doc, 8.5, 'normal', C.ink)
     txt(doc, 'CA encaissé sur la période', M + 5, boxY + 13.5)
     font(doc, 8.5, 'bold', C.ink)
     txt(doc, money(ca), M + LW - 8, boxY + 13.5, { align: 'right' })
-    const lines: [string, number][] = [[`Cotisations sociales (${pctTxt(s.tauxCotisations)})`, det.sociales]]
-    if (s.vlActif) lines.push([`Versement libératoire de l'impôt (${pctTxt(s.tauxVL)})`, det.vl])
-    lines.push([`Formation professionnelle CFP (${pctTxt(s.tauxCFP)})`, det.cfp])
+    // Chacun déclare sa part sur son compte URSSAF, à son taux (ACRE comprise).
+    const lines: [string, number][] = ASSOCIES.map((w) => [
+      `${USERS[w].prenom} : ${money(curP?.parts[w].ca ?? 0)} à déclarer (${pctTxt(tauxTotal(s, w, ref))}${acreActive(s, w, ref) ? ', ACRE' : ''})`,
+      curP?.parts[w].cotisations ?? 0,
+    ])
     let ly = boxY + 19.5
     for (const [l, v] of lines) {
       font(doc, 8, 'normal', C.muted)
@@ -839,8 +841,8 @@ export async function exportRapportMensuel(data: FluxData, month: string) {
     doc.setLineWidth(0.3)
     doc.line(M + 5, ly - 2.2, M + LW - 8, ly - 2.2)
     font(doc, 8.8, 'bold', C.ink)
-    txt(doc, `Total estimé (${pctTxt(tauxTotal(s))})`, M + 5, ly + 2.4)
-    txt(doc, money(det.total), M + LW - 8, ly + 2.4, { align: 'right' })
+    txt(doc, 'Total estimé des cotisations', M + 5, ly + 2.4)
+    txt(doc, money(totalCot), M + LW - 8, ly + 2.4, { align: 'right' })
 
     // Tuile « à garder de côté »
     const RX = M + LW

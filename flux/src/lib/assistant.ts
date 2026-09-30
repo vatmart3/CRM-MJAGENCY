@@ -9,9 +9,9 @@
 
 import { Categorie, Client, Depense, PAYE_PAR_LABEL, Recette, USERS, UserId } from '../types'
 import {
-  aEncaisser, caEncaisse, clientName, coutAnnuel, coutMensuel, depensesParCategorie, FluxData, joursDeRetard, notesDues, periodLabel, projetStats,
-  provisionUrssaf, rangeFor, rentabiliteParType, sansJustificatif, seuils, statutOf, synthese, tauxTotal, topClients, totalDu, tresorerie, urssafPeriods,
-  isEncaissee,
+  acreActive, aEncaisser, ASSOCIES, caEncaisse, clientName, coutAnnuel, coutMensuel, depensesParCategorie, FluxData, joursDeRetard, notesDues, periodLabel, projetStats,
+  provisionUrssaf, rangeFor, rentabiliteParType, sansJustificatif, seuils, statutOf, synthese, tauxResume, tauxTotal, topClients, totalDu, tresorerie, urssafPeriods,
+  isEncaissee, UrssafPeriod,
 } from './finance'
 import {
   addDays, addMonths, cap, diffDays, endOfMonth, fdate, fdateShort, inRange, MOIS, monthLabel, quarterOf, startOfMonth, startOfWeek, startOfYear,
@@ -108,6 +108,11 @@ export function buildContext(state: AssistantState, today: string) {
       versementLiberatoire: s.vlActif ? s.tauxVL : 0,
       tauxCFP: s.tauxCFP,
       tauxTotal: tauxTotal(s),
+      // Chacun déclare sa part du CA sur son propre compte URSSAF, à son taux.
+      tauxParAssocie: Object.fromEntries(
+        ASSOCIES.map((w) => [USERS[w].prenom, { tauxTotal: tauxTotal(s, w, today), acre: acreActive(s, w, today), finACRE: s.acre?.[w]?.fin || null }]),
+      ),
+      reductionACRE: s.reductionACRE,
       seuilTVA: s.seuilTVA,
       seuilTVAMajore: s.seuilTVAMajore,
       plafondMicro: s.plafondMicro,
@@ -656,7 +661,11 @@ function repSeuil(t: string, d: AssistantState, today: string): Answer {
 
 function repUrssaf(d: AssistantState, today: string): Answer {
   const periods = urssafPeriods(d, today)
-  const taux = tauxTotal(d.settings)
+  const taux = tauxResume(d.settings, today)
+  const split = (p: UrssafPeriod) => {
+    const qui = ASSOCIES.filter((w) => p.parts[w].cotisations > 0)
+    return qui.length > 1 ? ` : ${qui.map((w) => `${USERS[w].prenom} ${eur(p.parts[w].cotisations)}`).join(', ')}` : ''
+  }
   const impayees = periods.filter((p) => p.statut !== 'Payée' && p.statut !== 'En cours' && p.detail.total > 0).sort((a, b) => a.dateLimite.localeCompare(b.dateLimite))
   const enCours = periods.find((p) => p.statut === 'En cours')
   const enRetard = impayees.filter((p) => p.dateLimite < today)
@@ -665,7 +674,7 @@ function repUrssaf(d: AssistantState, today: string): Answer {
   const chiffres: Answer['chiffres'] = []
   const parts: string[] = []
 
-  if (!periods.some((p) => p.ca > 0) && !impayees.length) return ans(`Aucun encaissement pour l’instant, donc rien à payer à l’URSSAF. Ton taux de cotisations est de ${pct(taux, 1)} du CA encaissé.`, [{ label: 'Taux total', valeur: pct(taux, 1) }])
+  if (!periods.some((p) => p.ca > 0) && !impayees.length) return ans(`Aucun encaissement pour l’instant, donc rien à payer à l’URSSAF. Taux de cotisations sur le CA encaissé : ${taux}.`, [{ label: 'Taux', valeur: taux }])
 
   if (enRetard.length) {
     const tot = eur(sum(enRetard.map((p) => p.detail.total)))
@@ -678,11 +687,11 @@ function repUrssaf(d: AssistantState, today: string): Answer {
   }
   if (aVenir.length) {
     const p = aVenir[0]!
-    parts.push(`Tu dois ${eur(p.detail.total)} à l’URSSAF pour ${periodeUrssaf(p.label)} (CA encaissé ${eur(p.ca)}), à déclarer et payer avant le ${fdate(p.dateLimite)}.`)
+    parts.push(`Tu dois ${eur(p.detail.total)} à l’URSSAF pour ${periodeUrssaf(p.label)} (CA encaissé ${eur(p.ca)}${split(p)}), à déclarer et payer avant le ${fdate(p.dateLimite)}.`)
     chiffres.push({ label: `Échéance ${fdate(p.dateLimite)}`, valeur: eur(p.detail.total) })
   }
   if (enCours) {
-    parts.push(`${aVenir.length || enRetard.length ? 'En plus, l' : 'L'}a période en cours (${lc(enCours.label)}) cumule déjà ${eur(enCours.detail.total)} de cotisations sur ${eur(enCours.ca)} encaissés, à déclarer avant le ${fdate(enCours.dateLimite)}.`)
+    parts.push(`${aVenir.length || enRetard.length ? 'En plus, l' : 'L'}a période en cours (${lc(enCours.label)}) cumule déjà ${eur(enCours.detail.total)} de cotisations sur ${eur(enCours.ca)} encaissés${split(enCours)}, à déclarer avant le ${fdate(enCours.dateLimite)}.`)
     chiffres.push({ label: `En cours · à payer le ${fdateShort(enCours.dateLimite)}`, valeur: eur(enCours.detail.total) })
   }
   const provision = round2(du + (enCours?.detail.total ?? 0))
@@ -691,7 +700,7 @@ function repUrssaf(d: AssistantState, today: string): Answer {
     chiffres.push({ label: 'À garder de côté', valeur: eur(provision) })
   }
   if (!parts.length) parts.push('Tout est déclaré et payé : rien à devoir à l’URSSAF pour l’instant.')
-  chiffres.push({ label: 'Taux total', valeur: pct(taux, 1) })
+  chiffres.push({ label: 'Taux', valeur: taux })
   return ans(parts.join(' '), chiffres, ['Qu’est-ce que je garde ce mois-ci ?', 'Quelle est ma trésorerie disponible ?', 'Est-ce que je risque de dépasser le seuil de TVA ?'])
 }
 

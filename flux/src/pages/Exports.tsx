@@ -4,10 +4,10 @@ import {
   Users, Wallet,
 } from 'lucide-react'
 import { PeriodFilter, PeriodKind, useFlux } from '../store'
-import { periodLabel, rangeFor, shiftPeriod, synthese, tauxTotal } from '../lib/finance'
+import { periodLabel, rangeFor, shiftPeriod, synthese, tauxResume } from '../lib/finance'
 import { useFluxData } from '../lib/alerts'
 import { addMonths, cap, endOfMonth, monthLabel, startOfMonth, today } from '../lib/dates'
-import { cx, pct, plural } from '../lib/format'
+import { cx, plural } from '../lib/format'
 import {
   ExportState, TABLE_LABEL, TABLE_NAMES, TableName, describePeriod, exportAllCSV, exportLivreRecettes, exportRapportMensuel, exportRegistreDepenses,
   exportTableCSV, livreRecettesRows, registreDepensesRows,
@@ -119,7 +119,7 @@ function RapportCard() {
           <div className="grid grid-cols-2 gap-2.5 md:gap-3">
             <Figure label="CA encaissé" value={k.cur.ca} foot={<Trend cur={k.cur.ca} prev={k.prev.ca} prevNom={prevNom} />} />
             <Figure label="Dépenses" value={k.cur.depenses} foot={<Trend cur={k.cur.depenses} prev={k.prev.depenses} prevNom={prevNom} invert />} />
-            <Figure label="Cotisations URSSAF" value={k.cur.cotisations} foot={<span className="block text-xs text-muted leading-snug">Estimées à {pct(tauxTotal(d.settings), 1)} du CA</span>} />
+            <Figure label="Cotisations URSSAF" value={k.cur.cotisations} foot={<span className="block text-xs text-muted leading-snug">Au taux de chacun : {tauxResume(d.settings)}</span>} />
             <Figure
               hero
               label="Ce que tu gardes vraiment"

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Archive, ArrowDown, ArrowUp, CheckCircle2, Cloud, CloudOff, Download, ExternalLink, Moon, Plus, Save, Sun } from 'lucide-react'
 import { alive, useFlux } from '../store'
-import { Settings } from '../types'
-import { tauxTotal } from '../lib/finance'
+import { Settings, USERS, UserId } from '../types'
+import { ASSOCIES, tauxResume } from '../lib/finance'
 import { isCloud } from '../lib/supabase'
 import { cx, parseAmount, pct } from '../lib/format'
 import { today } from '../lib/dates'
@@ -36,6 +36,7 @@ export default function Reglages() {
   const [draft, setDraft] = useState<Settings>(s.settings)
   const set = (p: Partial<Settings>) => setDraft((d) => ({ ...d, ...p }))
   const setEnt = (p: Partial<Settings['entreprise']>) => setDraft((d) => ({ ...d, entreprise: { ...d.entreprise, ...p } }))
+  const setAcre = (who: UserId, p: Partial<Settings['acre'][UserId]>) => setDraft((d) => ({ ...d, acre: { ...d.acre, [who]: { ...d.acre[who], ...p } } }))
   const dirty = JSON.stringify(draft) !== JSON.stringify(s.settings)
 
   const save = (extra?: Partial<Settings>) => {
@@ -62,7 +63,7 @@ export default function Reglages() {
     >
       <div className="grid lg:grid-cols-2 gap-3 md:gap-4">
         <Card className="lg:row-span-2">
-          <CardHead title="Cotisations & seuils" sub={`Taux total appliqué au CA encaissé : ${pct(tauxTotal(draft), 2)}`} />
+          <CardHead title="Cotisations & seuils" sub={`Taux total appliqué au CA encaissé : ${tauxResume(draft, today(), 2)}`} />
           {!s.settings.tauxVerifies && (
             <div className="mb-4">
               <Notice tone="warn">
@@ -76,6 +77,34 @@ export default function Reglages() {
             <div className="col-span-2 card-2 px-4 py-3 space-y-3">
               <Toggle checked={draft.vlActif} onChange={(vlActif) => set({ vlActif })} label="Versement libératoire de l’impôt" />
               {draft.vlActif && <NumField label="Taux du versement libératoire" value={draft.tauxVL} onChange={(tauxVL) => set({ tauxVL })} suffix="%" />}
+            </div>
+            <div className="col-span-2 card-2 px-4 py-3 space-y-3">
+              <div>
+                <p className="text-sm font-medium">ACRE</p>
+                <p className="text-xs text-muted mt-0.5">
+                  Chacun déclare sa part du CA sur son propre compte URSSAF. L’ACRE réduit le taux de cotisations sociales de celui qui l’a, pour les encaissements jusqu’à sa date de fin.
+                </p>
+              </div>
+              {ASSOCIES.map((w) => (
+                <div key={w} className="space-y-2">
+                  <Toggle checked={draft.acre[w].actif} onChange={(actif) => setAcre(w, { actif })} label={`${USERS[w].prenom} a l’ACRE`} />
+                  {draft.acre[w].actif && (
+                    <Field label="Fin de l’ACRE" hint="Vide : appliquée sans limite.">
+                      <input type="date" className="input" value={draft.acre[w].fin} onChange={(e) => setAcre(w, { fin: e.target.value })} />
+                    </Field>
+                  )}
+                </div>
+              ))}
+              {ASSOCIES.some((w) => draft.acre[w].actif) && (
+                <NumField
+                  label="Réduction des cotisations sociales"
+                  value={draft.reductionACRE}
+                  onChange={(reductionACRE) => set({ reductionACRE })}
+                  suffix="%"
+                  step="1"
+                  hint={`25 % pour une activité démarrée depuis le 1er juillet 2025, 50 % avant. Taux réduit : ${pct(draft.tauxCotisations * (1 - draft.reductionACRE / 100), 2)}.`}
+                />
+              )}
             </div>
             <Field label="Seuil de franchise TVA"><MoneyInput value={draft.seuilTVA} onChange={(seuilTVA) => set({ seuilTVA })} /></Field>
             <Field label="Seuil TVA majoré"><MoneyInput value={draft.seuilTVAMajore} onChange={(seuilTVAMajore) => set({ seuilTVAMajore })} /></Field>

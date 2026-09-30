@@ -20,6 +20,10 @@ export const defaultSettings: Settings = {
   vlActif: false,
   tauxVL: 1.7,
   tauxCFP: 0.1,
+  // Jérémy n'a pas l'ACRE, Matheis l'a. Réduction de 25 % pour une activité démarrée
+  // depuis le 1er juillet 2025 (50 % avant) : à vérifier, avec la date de fin, dans Réglages.
+  acre: { jeremy: { actif: false, fin: '' }, matheis: { actif: true, fin: '' } },
+  reductionACRE: 25,
   seuilTVA: 37500,
   seuilTVAMajore: 41250,
   plafondMicro: 83600,

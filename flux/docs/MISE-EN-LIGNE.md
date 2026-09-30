@@ -73,7 +73,7 @@ Avec `ANTHROPIC_API_KEY`, Claude prend le relais : lecture des tickets plus fiab
 ## 5. Premiers réglages (Jérémy)
 
 Dans **Réglages** :
-1. Vérifier les **taux URSSAF** (cotisations, CFP, versement libératoire), les **seuils de TVA** et le **plafond micro** sur autoentrepreneur.urssaf.fr, puis cliquer « J'ai vérifié ces valeurs ».
+1. Vérifier les **taux URSSAF** (cotisations, CFP, versement libératoire), l'**ACRE** de chacun (Matheis : taux de réduction et date de fin), les **seuils de TVA** et le **plafond micro** sur autoentrepreneur.urssaf.fr, puis cliquer « J'ai vérifié ces valeurs ».
 2. Saisir le **solde du compte pro** à une date donnée : c'est le point de départ de la trésorerie estimée.
 3. Régler l'**objectif mensuel**, la **périodicité** de déclaration et la **répartition par défaut** entre associés.
 4. Compléter le montant de l'abonnement **Figma** dans Abonnements.

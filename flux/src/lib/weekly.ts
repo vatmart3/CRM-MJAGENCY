@@ -9,7 +9,7 @@ import { create } from 'zustand'
 import { Rapport } from '../types'
 import { alive, useFlux } from '../store'
 import {
-  aEncaisser, caEncaisse, clientName, cotisations, coutAnnuel, depensesTotal, FluxData, isEncaissee, joursDeRetard, sansJustificatif, seuils,
+  aEncaisser, caEncaisse, clientName, cotisationsSur, coutAnnuel, depensesTotal, FluxData, isEncaissee, joursDeRetard, sansJustificatif, seuils,
   synthese, tauxTotal, urssafPeriods,
 } from './finance'
 import { addDays, fdate, fdateShort, inRange, startOfMonth, startOfWeek, today as todayFn } from './dates'
@@ -39,6 +39,7 @@ export function weeklyFacts(state: FluxData, monday: string, ref = todayFn()) {
 
   const encaissements = state.recettes.filter((r) => isEncaissee(r) && inRange(r.dateEncaissement, monday, sunday)).sort((a, b) => b.montant - a.montant)
   const ca = caEncaisse(state.recettes, monday, sunday)
+  const aMettre = cotisationsSur(encaissements, state).total.total
   const depenses = depensesTotal(state.depenses, monday, sunday)
   const nbDepenses = state.depenses.filter((d) => !d.archived && inRange(d.date, monday, sunday)).length
 
@@ -69,8 +70,9 @@ export function weeklyFacts(state: FluxData, monday: string, ref = todayFn()) {
     nbDepenses,
     caSemainePrecedente: caEncaisse(state.recettes, pm, ps),
     depensesSemainePrecedente: depensesTotal(state.depenses, pm, ps),
-    aMettreDeCote: cotisations(ca, state.settings),
-    tauxCotisations: tauxTotal(state.settings),
+    aMettreDeCote: aMettre,
+    // Taux effectif de la semaine : chaque associé a le sien (ACRE).
+    tauxCotisations: ca > 0 ? round2((aMettre / ca) * 100) : tauxTotal(state.settings),
     retards: retards.map((r) => ({ client: cli(r.clientId), facture: r.numeroFacture || r.libelle, montant: r.montant, joursDeRetard: joursDeRetard(r, ref), relances: r.relances?.length ?? 0 })),
     nouveauxRetards: nouveauxRetards.map((r) => ({ client: cli(r.clientId), facture: r.numeroFacture || r.libelle, montant: r.montant })),
     enAttente: sum(ouvertes.filter((x) => x.statut === 'En attente').map((x) => x.r.montant)),

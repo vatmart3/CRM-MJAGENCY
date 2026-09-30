@@ -1,6 +1,6 @@
 import { useFlux } from '../store'
 import { Abonnement, Recette } from '../types'
-import { aMettreDeCote, clientName, joursDeRetard, nextEcheance, statutOf } from './finance'
+import { aMettreDeCoteTexte, clientName, joursDeRetard, nextEcheance, statutOf } from './finance'
 import { fdate, nowISO, today } from './dates'
 import { eur, plain } from './format'
 import { toast } from '../components/ui'
@@ -42,7 +42,7 @@ export function ignorerPrelevement(a: Abonnement) {
 export function marquerEncaissee(r: Recette, date = today()) {
   const s = useFlux.getState()
   s.update('recettes', r.id, { statut: 'Encaissée', dateEncaissement: date })
-  toast({ title: 'Encaissée !', text: `Mets ${eur(aMettreDeCote(r.montant, s.settings))} de côté pour l’URSSAF.`, tone: 'success' })
+  toast({ title: 'Encaissée !', text: `Mets ${aMettreDeCoteTexte({ ...r, dateEncaissement: date }, s)} de côté pour l’URSSAF.`, tone: 'success' })
 }
 
 export function marquerRembourse(ids: string[], date = today()) {
